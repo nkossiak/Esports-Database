@@ -22,15 +22,12 @@
 
 ## Run it
 1. Open terminal in this folder.
-2. Create a virtual environment (optional but recommended):
-   - Windows: `python -m venv venv`
-   - Activate: `venv\\Scripts\\activate`
-3. Install requirements:
+2. Install requirements:
    - `pip install -r requirements.txt`
-4. Run the app:
+3. Run the app:
    - `python app.py`
-5. Open in browser:
+4. Open in browser:
    - `http://127.0.0.1:5000`
 
 ## Reset the database
-Delete `esports.db`, then run `python app.py` again.
+Delete `esports.db`.
