@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Competitive Teams</h2>
+<form method="POST">
+    <input name="name" placeholder="Team Name" required>
+    <input name="game" placeholder="Game" required>
+    <input name="location" placeholder="Location">
+    <input name="founded_year" type="number" placeholder="Founded Year">
+    <input name="ranking" type="number" placeholder="Ranking">
+    <button type="submit">Add Team</button>
+</form>
+
+<table>
+    <tr><th>ID</th><th>Name</th><th>Game</th><th>Location</th><th>Founded Year</th><th>Ranking</th></tr>
+    {% for team in teams %}
+    <tr>
+        <td>{{ team.team_id }}</td>
+        <td>{{ team.name }}</td>
+        <td>{{ team.game }}</td>
+        <td>{{ team.location }}</td>
+        <td>{{ team.founded_year or '' }}</td>
+        <td>{{ team.ranking or '' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

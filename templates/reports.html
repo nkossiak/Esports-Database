@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Reports</h2>
+
+
+<h3>Players Per Team</h3>
+<table>
+    <tr><th>Team</th><th>Player Count</th></tr>
+    {% for row in players_per_team %}
+    <tr><td>{{ row.team_name }}</td><td>{{ row.player_count }}</td></tr>
+    {% endfor %}
+</table>
+
+<h3>Tournaments Per Team</h3>
+<table>
+    <tr><th>Team</th><th>Tournament Count</th></tr>
+    {% for row in tournaments_per_team %}
+    <tr><td>{{ row.team_name }}</td><td>{{ row.tournament_count }}</td></tr>
+    {% endfor %}
+</table>
+
+<h3>High Prize Pool Tournaments</h3>
+<table>
+    <tr><th>Name</th><th>Country</th><th>Prize Pool</th></tr>
+    {% for row in high_prize_tournaments %}
+    <tr><td>{{ row.name }}</td><td>{{ row.country }}</td><td>{{ row.prize_pool }}</td></tr>
+    {% endfor %}
+</table>
+
+<h2>Find Teammates</h2>
+
+<form method="POST">
+    <select name="player_name">
+        {% for p in players %}
+            <option value="{{ p[0] }}">{{ p[0] }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Search</button>
+</form>
+
+{% if teammates %}
+<h3>Teammates of {{ selected_player }}</h3>
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Team</th>
+    </tr>
+
+    {% for t in teammates %}
+    <tr>
+        <td>{{ t[0] }}</td>
+        <td>{{ t[1] }}</td>
+        <td>{{ t[2] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

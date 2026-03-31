@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Plays For</h2>
+<form method="POST">
+    <select name="player_id" required>
+        <option value="">Select Player</option>
+        {% for player in players %}
+        <option value="{{ player.player_id }}">{{ player.name }} ({{ player.username }})</option>
+        {% endfor %}
+    </select>
+    <select name="team_id" required>
+        <option value="">Select Team</option>
+        {% for team in teams %}
+        <option value="{{ team.team_id }}">{{ team.name }}</option>
+        {% endfor %}
+    </select>
+    <input name="date_joined" type="date">
+    <input name="date_left" type="date">
+    <button type="submit">Add Plays For</button>
+</form>
+
+<table>
+    <tr><th>ID</th><th>Player</th><th>Username</th><th>Team</th><th>Date Joined</th><th>Date Left</th></tr>
+    {% for row in rows %}
+    <tr>
+        <td>{{ row.plays_for_id }}</td>
+        <td>{{ row.player_name }}</td>
+        <td>{{ row.username }}</td>
+        <td>{{ row.team_name }}</td>
+        <td>{{ row.date_joined or '' }}</td>
+        <td>{{ row.date_left or '' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
