@@ -216,21 +216,110 @@
         margin-top: 8px;
     }
 
-    .toolbar form {
+    .query-report-card {
         display: grid;
-        grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
-        gap: 12px;
-        align-items: end;
-        margin: 0;
+        gap: 14px;
     }
 
-    .toolbar.query1-toolbar form {
+    .query-report-text {
+        display: grid;
+        gap: 6px;
+    }
+
+    .query-report-desc {
+        margin: 0;
+        color: #a2aabc;
+        font-size: 0.92rem;
+        line-height: 1.4;
+    }
+
+    .query-report-table-wrap {
+        background: #0d1017;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .query-report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0;
+    }
+
+    .query-report-table th,
+    .query-report-table td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid #2a2f3a;
+        vertical-align: middle;
+        font-size: 0.84rem;
+    }
+
+    .query-report-table th {
+        background: #1b1730;
+        color: #efe6ff;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        letter-spacing: 0.4px;
+    }
+
+    .query-report-table tbody tr:hover td {
+        background: #1a1d25;
+    }
+
+    .query-report-empty {
+        color: #8f98ab;
+        font-size: 0.84rem;
+        padding: 14px 12px;
+    }
+
+    .report-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .report-copy {
+        display: grid;
+        gap: 4px;
+        align-content: start;
+    }
+
+    .report-title {
+        margin: 0;
+        color: #f5f1ff;
+        font-size: 0.98rem;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .report-subtitle {
+        margin: 0;
+        color: #a2aabc;
+        font-size: 0.92rem;
+        line-height: 1.4;
+    }
+
+    .report-controls {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+    }
+
+    .report-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(160px, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .report-controls-grid.one-field {
         grid-template-columns: minmax(230px, 1fr) auto;
     }
 
-    .toolbar.query3-toolbar form {
+    .report-controls-grid.button-only {
         grid-template-columns: auto;
-        justify-content: start;
+        justify-content: end;
     }
 
     .toolbar label {
@@ -238,6 +327,16 @@
         margin-bottom: 8px;
         font-weight: 700;
         color: #ece4ff;
+        font-size: 0.84rem;
+        letter-spacing: 0.2px;
+    }
+
+    .toolbar .control-hint {
+        margin: 0;
+        color: #8f98ab;
+        font-size: 0.8rem;
+        line-height: 1.35;
+        text-align: right;
     }
 
     .empty-state {
@@ -257,13 +356,27 @@
 
     @media (max-width: 1200px) {
         .overview-layout,
-        .query-layout-two-col {
+        .query-layout-two-col,
+        .report-toolbar {
             grid-template-columns: 1fr;
         }
 
         .info-panel {
             min-height: auto;
             position: static;
+        }
+    }
+
+    @media (max-width: 860px) {
+        .report-controls-grid,
+        .report-controls-grid.one-field,
+        .report-controls-grid.button-only {
+            grid-template-columns: 1fr;
+            justify-content: stretch;
+        }
+
+        .toolbar .control-hint {
+            text-align: left;
         }
     }
 </style>
@@ -309,15 +422,37 @@
     <section id="query1-tab" class="tab-pane">
         <div class="query-layout">
             <div class="toolbar query1-toolbar">
-                <form onsubmit="return false;">
-                    <div>
-                        <label for="query1-player-filter">Filter by Player</label>
-                        <select id="query1-player-filter">
-                            <option value="">Show All Players + Teams</option>
-                        </select>
+                <div class="query-report-card">
+                    <div class="query-report-text">
+                        <h3 class="report-title">Roster Relationship Report</h3>
+                        <p class="query-report-desc">Shows each player and the team they are connected to through the <strong>Plays_For</strong> relationship.</p>
                     </div>
-                    <button type="button" id="query1-reset-btn">Reset View</button>
-                </form>
+
+                    <div class="report-controls">
+                        <div class="report-controls-grid one-field">
+                            <div>
+                                <label for="query1-player-filter">Player Filter</label>
+                                <select id="query1-player-filter">
+                                    <option value="">Show All Players + Teams</option>
+                                </select>
+                            </div>
+                            <button type="button" id="query1-reset-btn">Reset View</button>
+                        </div>
+                    </div>
+
+                    <div class="query-report-table-wrap">
+                        <table class="query-report-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Team</th>
+                                </tr>
+                            </thead>
+                            <tbody id="query1-report-body"></tbody>
+                        </table>
+                        <div id="query1-report-empty" class="query-report-empty" style="display:none;">No roster rows match the selected filter.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="query-layout-two-col">
@@ -344,22 +479,46 @@
     <section id="query2-tab" class="tab-pane">
         <div class="query-layout">
             <div class="toolbar">
-                <form onsubmit="return false;" id="query2-form">
-                    <div>
-                        <label for="query2-threshold">Esports Index Threshold (h)</label>
-                        <input type="number" id="query2-threshold" min="1" value="2">
+                <div class="query-report-card">
+                    <div class="query-report-text">
+                        <h3 class="report-title">Esports Index Qualification Report</h3>
+                        <p class="query-report-desc">Shows the teams that satisfy the selected esports index threshold <strong>h</strong> under the chosen mode.</p>
                     </div>
 
-                    <div>
-                        <label for="query2-mode">Mode</label>
-                        <select id="query2-mode">
-                            <option value="participant">Participant</option>
-                            <option value="winner">Winner</option>
-                        </select>
+                    <div class="report-controls">
+                        <div class="report-controls-grid">
+                            <div>
+                                <label for="query2-threshold">Esports Index Threshold (h)</label>
+                                <input type="number" id="query2-threshold" min="1" value="2">
+                            </div>
+
+                            <div>
+                                <label for="query2-mode">Mode</label>
+                                <select id="query2-mode">
+                                    <option value="participant">Participant</option>
+                                    <option value="winner">Winner</option>
+                                </select>
+                            </div>
+
+                            <button type="button" id="query2-run-btn">Run Query 2</button>
+                        </div>
                     </div>
 
-                    <button type="button" id="query2-run-btn">Visualize Query 2</button>
-                </form>
+                    <div class="query-report-table-wrap">
+                        <table class="query-report-table">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Qualifying Tournaments</th>
+                                    <th>Threshold</th>
+                                    <th>Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="query2-report-body"></tbody>
+                        </table>
+                        <div id="query2-report-empty" class="query-report-empty" style="display:none;">No teams matched the selected threshold.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="query-layout-two-col">
@@ -391,12 +550,32 @@
     <section id="query3-tab" class="tab-pane">
         <div class="query-layout">
             <div class="toolbar query3-toolbar">
-                <form onsubmit="return false;">
-                    <div>
-                        <label for="query3-run-btn">Run Query</label>
-                        <button type="button" id="query3-run-btn">Visualize Query 3</button>
+                <div class="query-report-card">
+                    <div class="query-report-text">
+                        <h3 class="report-title">Q1 Tournament Network Report</h3>
+                        <p class="query-report-desc">Shows Q1 tournaments, defined here as tournaments with prize pools above <strong>$1M</strong>, and the teams linked to each one.</p>
                     </div>
-                </form>
+
+                    <div class="report-controls">
+                        <div class="report-controls-grid button-only">
+                            <button type="button" id="query3-run-btn">Run Query 3</button>
+                        </div>
+                    </div>
+
+                    <div class="query-report-table-wrap">
+                        <table class="query-report-table">
+                            <thead>
+                                <tr>
+                                    <th>Tournament</th>
+                                    <th>Prize Pool</th>
+                                    <th>Connected Teams</th>
+                                </tr>
+                            </thead>
+                            <tbody id="query3-report-body"></tbody>
+                        </table>
+                        <div id="query3-report-empty" class="query-report-empty" style="display:none;">No Q1 tournaments were found.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="query-layout-two-col">
@@ -743,6 +922,114 @@
                 '<div class="empty-state">The overview graph could not be loaded.</div>';
         });
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderSimpleReportRows(tbodyId, emptyId, rows, columns) {
+        const tbody = document.getElementById(tbodyId);
+        const emptyBox = document.getElementById(emptyId);
+
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '';
+            emptyBox.style.display = 'block';
+            return;
+        }
+
+        emptyBox.style.display = 'none';
+        tbody.innerHTML = rows.map(row => `
+            <tr>
+                ${columns.map(key => `<td>${escapeHtml(row[key] ?? 'N/A')}</td>`).join('')}
+            </tr>
+        `).join('');
+    }
+
+    function buildQuery1ReportRows(elements) {
+        const nodes = new Map(
+            elements
+                .filter(el => el.data && !el.data.source)
+                .map(el => [el.data.id, el.data])
+        );
+
+        return elements
+            .filter(el => el.data && el.data.source && el.data.target)
+            .map(el => ({
+                player: nodes.get(el.data.source)?.label || 'N/A',
+                team: nodes.get(el.data.target)?.label || 'N/A'
+            }))
+            .sort((a, b) => a.player.localeCompare(b.player) || a.team.localeCompare(b.team));
+    }
+
+    function updateQuery1Report(elements) {
+        renderSimpleReportRows(
+            'query1-report-body',
+            'query1-report-empty',
+            buildQuery1ReportRows(elements),
+            ['player', 'team']
+        );
+    }
+
+    function buildQuery2ReportRows(elements, modeLabel, threshold) {
+        return elements
+            .filter(el => el.data && el.data.type === 'team')
+            .map(el => ({
+                team: el.data.label,
+                qualifying_tournaments: el.data.attributes?.qualifying_tournaments ?? el.data.count ?? 'N/A',
+                threshold: threshold,
+                mode: modeLabel
+            }))
+            .sort((a, b) => a.team.localeCompare(b.team));
+    }
+
+    function updateQuery2Report(elements, modeLabel, threshold) {
+        renderSimpleReportRows(
+            'query2-report-body',
+            'query2-report-empty',
+            buildQuery2ReportRows(elements, modeLabel, threshold),
+            ['team', 'qualifying_tournaments', 'threshold', 'mode']
+        );
+    }
+
+    function buildQuery3ReportRows(elements) {
+        const tournamentMap = new Map();
+        const teamMap = new Map();
+
+        elements.filter(el => el.data && !el.data.source).forEach(el => {
+            if (el.data.type === 'tournament') tournamentMap.set(el.data.id, el.data);
+            if (el.data.type === 'team') teamMap.set(el.data.id, el.data);
+        });
+
+        const grouped = new Map();
+        elements.filter(el => el.data && el.data.source && el.data.target).forEach(el => {
+            const tournamentId = el.data.source;
+            const teamName = teamMap.get(el.data.target)?.label;
+            if (!grouped.has(tournamentId)) grouped.set(tournamentId, new Set());
+            if (teamName) grouped.get(tournamentId).add(teamName);
+        });
+
+        return Array.from(tournamentMap.values())
+            .map(tournament => ({
+                tournament: tournament.label,
+                prize_pool: tournament.attributes?.prize_pool || 'N/A',
+                connected_teams: Array.from(grouped.get(tournament.id) || []).sort((a, b) => a.localeCompare(b)).join(', ') || 'N/A'
+            }))
+            .sort((a, b) => a.tournament.localeCompare(b.tournament));
+    }
+
+    function updateQuery3Report(elements) {
+        renderSimpleReportRows(
+            'query3-report-body',
+            'query3-report-empty',
+            buildQuery3ReportRows(elements),
+            ['tournament', 'prize_pool', 'connected_teams']
+        );
+    }
+
     // QUERY 1
     let query1Cy = null;
     let query1AllElements = [];
@@ -816,16 +1103,20 @@
             });
 
             renderQuery1(query1AllElements);
+            updateQuery1Report(query1AllElements);
 
             dropdown.addEventListener('change', function() {
                 const playerId = this.value;
                 const filtered = getNeighborhoodElements(playerId);
                 renderQuery1(filtered);
+                updateQuery1Report(filtered);
             });
 
             document.getElementById('query1-reset-btn').addEventListener('click', function() {
                 dropdown.value = '';
                 renderQuery1(query1AllElements);
+                updateQuery1Report(query1AllElements);
+            updateQuery1Report(query1AllElements);
             });
         })
         .catch(() => {
@@ -886,10 +1177,17 @@
         fetch(`/api/graph-data/query2?mode=${encodeURIComponent(mode)}&n=${encodeURIComponent(n)}`)
             .then(res => res.json())
             .then(data => {
-                renderQuery2(data.elements || []);
+                const elements = data.elements || [];
+                renderQuery2(elements);
+                updateQuery2Report(
+                    elements,
+                    mode === 'winner' ? 'Winner' : 'Participant',
+                    n
+                );
             })
             .catch(() => {
                 renderQuery2([]);
+                updateQuery2Report([], mode === 'winner' ? 'Winner' : 'Participant', n);
             });
     }
 
@@ -946,10 +1244,13 @@
         fetch('/api/graph-data/query3')
             .then(res => res.json())
             .then(data => {
-                renderQuery3(data.elements || []);
+                const elements = data.elements || [];
+                renderQuery3(elements);
+                updateQuery3Report(elements);
             })
             .catch(() => {
                 renderQuery3([]);
+                updateQuery3Report([]);
             });
     }
 
