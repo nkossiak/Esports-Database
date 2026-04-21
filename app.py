@@ -519,7 +519,6 @@ def query3_graph_data():
     ''').fetchall()
 
     q1_tournaments = []
-    q1_ids = []
 
     for tournament in all_tournaments:
         attrs = safe_json_load(tournament['Attributes'])
@@ -527,64 +526,82 @@ def query3_graph_data():
 
         if prize_value > 1_000_000:
             q1_tournaments.append((tournament, attrs))
-            q1_ids.append(tournament['NodeID'])
 
-    if not q1_ids:
+    if not q1_tournaments:
         conn.close()
         return jsonify({'elements': []})
 
-    placeholders = ','.join(['?'] * len(q1_ids))
-
-    # Teams that played in those Q1 tournaments
-    team_nodes = conn.execute(f'''
-        SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes
-        FROM Nodes n
-        JOIN Edges e ON n.NodeID = e.TargetNodeID
-        WHERE n.NodeType = "Team"
-          AND e.EdgeType = "Played_In"
-          AND e.SourceNodeID IN ({placeholders})
-        ORDER BY n.Name
-    ''', q1_ids).fetchall()
-
-    edges = conn.execute(f'''
-        SELECT EdgeID, SourceNodeID, TargetNodeID
-        FROM Edges
-        WHERE EdgeType = "Played_In"
-          AND SourceNodeID IN ({placeholders})
-    ''', q1_ids).fetchall()
-
     elements = []
+    added_node_ids = set()
+    added_edge_ids = set()
 
     for tournament, attrs in q1_tournaments:
-        elements.append({
-            'data': {
-                'id': str(tournament['NodeID']),
-                'label': tournament['Name'],
-                'type': 'tournament',
-                'nodeType': tournament['NodeType'],
-                'attributes': attrs
-            }
-        })
+        tournament_id = tournament['NodeID']
 
-    for team in team_nodes:
-        elements.append({
-            'data': {
-                'id': str(team['NodeID']),
-                'label': team['Name'],
-                'type': 'team',
-                'nodeType': team['NodeType'],
-                'attributes': safe_json_load(team['Attributes'])
-            }
-        })
+        if tournament_id not in added_node_ids:
+            elements.append({
+                'data': {
+                    'id': str(tournament_id),
+                    'label': tournament['Name'],
+                    'type': 'tournament',
+                    'nodeType': tournament['NodeType'],
+                    'attributes': attrs
+                }
+            })
+            added_node_ids.add(tournament_id)
 
-    for edge in edges:
-        elements.append({
-            'data': {
-                'id': f"q3e{edge['EdgeID']}",
-                'source': str(edge['SourceNodeID']),
-                'target': str(edge['TargetNodeID'])
-            }
-        })
+        participant_edges = conn.execute('''
+            SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType
+            FROM Edges
+            WHERE EdgeType = "Played_In"
+              AND SourceNodeID = ?
+        ''', (tournament_id,)).fetchall()
+
+        # Fallback: if a Q1 tournament has no Played_In rows yet,
+        # still show its winner team so the graph is not tournament-only.
+        relevant_edges = participant_edges
+        if not relevant_edges:
+            relevant_edges = conn.execute('''
+                SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType
+                FROM Edges
+                WHERE EdgeType = "Won_By"
+                  AND SourceNodeID = ?
+            ''', (tournament_id,)).fetchall()
+
+        for edge in relevant_edges:
+            team = conn.execute('''
+                SELECT NodeID, Name, NodeType, Attributes
+                FROM Nodes
+                WHERE NodeID = ?
+                  AND NodeType = "Team"
+            ''', (edge['TargetNodeID'],)).fetchone()
+
+            if not team:
+                continue
+
+            if team['NodeID'] not in added_node_ids:
+                elements.append({
+                    'data': {
+                        'id': str(team['NodeID']),
+                        'label': team['Name'],
+                        'type': 'team',
+                        'nodeType': team['NodeType'],
+                        'attributes': safe_json_load(team['Attributes'])
+                    }
+                })
+                added_node_ids.add(team['NodeID'])
+
+            edge_id = f"q3e{edge['EdgeID']}"
+            if edge_id not in added_edge_ids:
+                elements.append({
+                    'data': {
+                        'id': edge_id,
+                        'source': str(edge['SourceNodeID']),
+                        'target': str(edge['TargetNodeID']),
+                        'edgeType': edge['EdgeType']
+                    }
+                })
+                added_edge_ids.add(edge_id)
 
     conn.close()
     return jsonify({'elements': elements})
