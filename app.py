@@ -185,10 +185,21 @@ def parse_prize_value(raw_value):
 @app.route('/')
 def index():
     conn = get_db_connection()
+
+    players = conn.execute(
+        'SELECT Name FROM Nodes WHERE NodeType = "Player" ORDER BY Name'
+    ).fetchall()
+
     nodes = conn.execute('SELECT COUNT(*) FROM Nodes').fetchone()[0]
     edges = conn.execute('SELECT COUNT(*) FROM Edges').fetchone()[0]
+
     conn.close()
-    return render_template('index.html', counts={'nodes': nodes, 'edges': edges})
+
+    return render_template(
+        'reports.html',
+        players=players,
+        counts={'nodes': nodes, 'edges': edges}
+    )
 
 @app.route('/players')
 def players_page():
@@ -360,11 +371,21 @@ def tournament_details(node_id):
 @app.route('/reports')
 def reports_page():
     conn = get_db_connection()
+
     players = conn.execute(
         'SELECT Name FROM Nodes WHERE NodeType = "Player" ORDER BY Name'
     ).fetchall()
+
+    nodes = conn.execute('SELECT COUNT(*) FROM Nodes').fetchone()[0]
+    edges = conn.execute('SELECT COUNT(*) FROM Edges').fetchone()[0]
+
     conn.close()
-    return render_template('reports.html', players=players)
+
+    return render_template(
+        'reports.html',
+        players=players,
+        counts={'nodes': nodes, 'edges': edges}
+    )
 
 
 
