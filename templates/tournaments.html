@@ -1,35 +1,67 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
 {% block content %}
-<h2>Esports Tournaments</h2>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="margin: 0;">All Tournaments</h2>
+        <span style="background: #33285b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem;">
+            {{ tournaments|length }} Total
+        </span>
+    </div>
 
-<form method="POST">
-    <input name="name" placeholder="Tournament Name" required>
-    <input name="country" placeholder="Host Country">
-    <input name="founded_year" type="number" placeholder="Year">
-    <input name="prize_pool" placeholder="Prize Pool ($)">
-    <button type="submit">Add Tournament</button>
-</form>
+    <div class="card" style="background: #eef2ff; border: 1px solid #ddd; margin-bottom: 30px; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-top: 0; color: #33285b;">Add New Tournament</h3>
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px;">
+                <input name="name" placeholder="Tournament Name" required style="width: 100%;">
+                <input name="country" placeholder="Location" style="width: 100%;">
+                <input name="founded_year" placeholder="Year" style="width: 100%;">
+                <input name="prize_pool" placeholder="Prize (e.g. $250,000)" style="width: 100%;">
+            </div>
+            <button type="submit" style="background: #33285b; color: white; border: none; padding: 10px 20px; margin-top: 15px; border-radius: 4px; cursor: pointer;">
+                Add Tournament
+            </button>
+        </form>
+    </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>NodeID</th>
-            <th>Name</th>
-            <th>Location</th>
-            <th>Year</th>
-            <th>Prize Pool</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for t in tournaments %}
-        <tr>
-            <td>{{ t.NodeID }}</td>
-            <td><strong>{{ t.Name }}</strong></td>
-            <td>{{ t.attr.country }}</td>
-            <td>{{ t.attr.year }}</td>
-            <td>{{ t.attr.prize_pool }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 24px;">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tournament Name</th>
+                <th>Location</th>
+                <th>Year</th>
+                <th>Prize Pool</th>
+                <th style="text-align: center;">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tournament in tournaments %}
+            <tr>
+                <td>
+                    <div style="font-weight: bold; color: #33285b;">{{ tournament.Name }}</div>
+                    </td>
+                <td>{{ tournament.attr.get('country', 'Online') }}</td>
+                <td>{{ tournament.attr.get('year', 'N/A') }}</td>
+                <td style="color: #28a745; font-weight: bold;">
+                    {{ tournament.attr.get('prize_pool', 'TBD') }}
+                </td>
+                <td style="text-align: center;">
+                    <a href="/tournament/{{ tournament.NodeID }}" 
+                       style="text-decoration: none; background: #eef2ff; color: #33285b; padding: 6px 12px; border-radius: 4px; border: 1px solid #33285b; font-size: 0.85rem; display: inline-block;">
+                        View Results
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #777; padding: 24px;">
+                    No tournaments found in the database.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
