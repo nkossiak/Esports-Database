@@ -1,37 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Database Information</h2>
-<p></p>
 
 <div class="cards">
-    <div class="card"><strong>Players</strong><br>{{ counts.players }}</div>
-    <div class="card"><strong>Teams</strong><br>{{ counts.teams }}</div>
-    <div class="card"><strong>Tournaments</strong><br>{{ counts.tournaments }}</div>
+    <div class="card"><strong>Total Nodes</strong><br>{{ counts.nodes }}</div>
+    <div class="card"><strong>Total Edges</strong><br>{{ counts.edges }}</div>
 </div>
 
-<h3>Current Team Rosters</h3>
-<table>
-    <tr><th>Player</th><th>Username</th><th>Team</th><th>Date Joined</th><th>Date Left</th></tr>
-    {% for row in roster %}
-    <tr>
-        <td>{{ row.player_name }}</td>
-        <td>{{ row.username }}</td>
-        <td>{{ row.team_name }}</td>
-        <td>{{ row.date_joined or '' }}</td>
-        <td>{{ row.date_left or '' }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-<h3>Team Tournament Appearances</h3>
-<table>
-    <tr><th>Team</th><th>Tournament</th><th>Date Played</th></tr>
-    {% for row in appearances %}
-    <tr>
-        <td>{{ row.team_name }}</td>
-        <td>{{ row.tournament_name }}</td>
-        <td>{{ row.date_played or '' }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<p>Use the <strong>Reports</strong> tab to visualize player networks and analyze tournament influence.</p>
 {% endblock %}

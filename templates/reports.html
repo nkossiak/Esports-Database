@@ -1,60 +1,96 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Reports</h2>
 
+<h2>Graph Database Reports</h2>
 
-<h3>Players Per Team</h3>
+{% if selected_player %}
+    <h3>Co-Author (Teammate) Network for {{ selected_player }}</h3>
+    <div id="cy" style="width: 100%; height: 400px; background-color: #f8f9fa; border: 1px solid #ccc; border-radius: 8px;"></div>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <h2>Find Teammates</h2>
+    <form method="POST">
+        <select name="player_name">
+            {% for p in players %}
+                <option value="{{ p.Name }}" {% if p.Name == selected_player %}selected{% endif %}>{{ p.Name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Search & Visualize</button>
+    </form>
+</div>
+
+<hr>
+
+<h3>Required Query 2: h-index ≥ 5</h3>
+<p><small>Definition: Players with 5+ tournament appearances ranked 5th or better.</small></p>
 <table>
-    <tr><th>Team</th><th>Player Count</th></tr>
-    {% for row in players_per_team %}
-    <tr><td>{{ row.team_name }}</td><td>{{ row.player_count }}</td></tr>
+    <tr><th>Player Name</th><th>Type</th></tr>
+    {% for row in h_index_authors %}
+    <tr>
+        <td>{{ row.Name }}</td>
+        <td>{{ row.NodeType }}</td>
+    </tr>
     {% endfor %}
 </table>
 
-<h3>Tournaments Per Team</h3>
+<h3>Required Query 3: Q1 Influence Network</h3>
+<p><small>Definition: Players linked to teammates who have played in "Tier-1" tournaments ($500k+ prize pool).</small></p>
 <table>
-    <tr><th>Team</th><th>Tournament Count</th></tr>
-    {% for row in tournaments_per_team %}
-    <tr><td>{{ row.team_name }}</td><td>{{ row.tournament_count }}</td></tr>
+    <tr><th>Influential Players</th></tr>
+    {% for row in q1_influence %}
+    <tr><td>{{ row.Name }}</td></tr>
     {% endfor %}
 </table>
-
-<h3>High Prize Pool Tournaments</h3>
-<table>
-    <tr><th>Name</th><th>Country</th><th>Prize Pool</th></tr>
-    {% for row in high_prize_tournaments %}
-    <tr><td>{{ row.name }}</td><td>{{ row.country }}</td><td>{{ row.prize_pool }}</td></tr>
-    {% endfor %}
-</table>
-
-<h2>Find Teammates</h2>
-
-<form method="POST">
-    <select name="player_name">
-        {% for p in players %}
-            <option value="{{ p[0] }}">{{ p[0] }}</option>
-        {% endfor %}
-    </select>
-    <button type="submit">Search</button>
-</form>
 
 {% if teammates %}
-<h3>Teammates of {{ selected_player }}</h3>
-
+<h3>Teammate List for {{ selected_player }}</h3>
 <table>
-    <tr>
-        <th>Name</th>
-        <th>Username</th>
-        <th>Team</th>
-    </tr>
-
+    <tr><th>Name</th><th>Type</th></tr>
     {% for t in teammates %}
     <tr>
-        <td>{{ t[0] }}</td>
-        <td>{{ t[1] }}</td>
-        <td>{{ t[2] }}</td>
+        <td>{{ t.Name }}</td>
+        <td>{{ t.NodeType }}</td>
     </tr>
     {% endfor %}
 </table>
 {% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<script>
+    {% if selected_player %}
+    fetch('/graph-data/{{ selected_player }}')
+        .then(res => res.json())
+        .then(data => {
+            var cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: data.elements,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(label)',
+                            'background-color': 'data(type) === "team" ? "#ff4757" : "#2f3542"',
+                            'color': '#fff',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'font-size': '10px',
+                            'width': 45, 'height': 45
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: { 
+                            'width': 2, 
+                            'line-color': '#adb5bd',
+                            'curve-style': 'bezier'
+                        }
+                    }
+                ],
+                layout: { name: 'cose', padding: 20 }
+            });
+        });
+    {% endif %}
+</script>
+
 {% endblock %}

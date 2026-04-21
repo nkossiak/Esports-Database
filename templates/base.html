@@ -1,10 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competitive Esports Network</title>
+    <title>Esports Graph</title>
     <style>
         body { font-family: 'Exo 2', sans-serif; margin: 0; background: #5d5863; color: #222; }
         header { background: #33285b; color: white; padding: 16px 24px; }
@@ -19,30 +16,20 @@
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
         .card { background: #eef2ff; padding: 14px; border-radius: 8px; }
         .flash { background: #dcfce7; border: 1px solid #86efac; padding: 10px; margin-bottom: 12px; }
-</style>
-</head>
-<body>
-    <header>
-        <h1>Competitive Esports Network</h1>
-        <nav>
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('players') }}">Players</a>
-            <a href="{{ url_for('teams') }}">Teams</a>
-            <a href="{{ url_for('tournaments') }}">Tournaments</a>
-            <a href="{{ url_for('plays_for') }}">Plays For</a>
-            <a href="{{ url_for('played_in') }}">Played In</a>
-            <a href="{{ url_for('reports') }}">Reports</a>
-        </nav>
-    </header>
-    <main>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="flash">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-    </main>
-</body>
+    </style>
+    </head>
+    <body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('players') }}">Players</a>
+        <a href="{{ url_for('teams') }}">Teams</a>
+        <a href="{{ url_for('tournaments') }}">Tournaments</a>
+        <a href="{{ url_for('plays_for') }}">Plays For</a>
+        <a href="{{ url_for('played_in') }}">Played In</a>
+        <a href="{{ url_for('reports') }}">Reports</a>
+    </nav>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </body>
 </html>
