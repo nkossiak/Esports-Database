@@ -73,22 +73,13 @@ def scrape_deep_details():
 
                 def get_table_data(label):
                     try:
-                        # Grab all text in the row to find the data cell
                         row_text = page.locator(f"tr:has-text('{label}') >> td").all_inner_texts()
                         if not row_text: return "Unknown"
-                        
                         val = row_text[-1].strip()
-                        
-                        # CLEANUP LOGIC:
-                        # 1. Avoid "Always" bug (from "Always use..." tooltips)
                         if val.lower() == "always":
-                            # Try to get the cell content specifically by excluding hidden elements
                             val = page.locator(f"tr:has-text('{label}') >> td").last.evaluate("node => node.innerText").strip()
-                        
-                        # 2. Avoid "Team Color" bug
                         if "Team Color" in val:
-                            return "Free Agent" # Or try to find the text node specifically
-                            
+                            return "Free Agent"
                         return val if val else "Unknown"
                     except:
                         return "Unknown"
@@ -98,13 +89,12 @@ def scrape_deep_details():
                 country = get_table_data("Country")
                 birthday = get_table_data("Birthday")
 
-                # One last safety check on names
                 if actual_name == "Always" or "Twitter" in actual_name:
                     actual_name = "Unknown"
 
-                print(f"SUCCESS: {username} | Real Name: {actual_name} | Team: {team_name}")
+                print(f"SUCCESS: {username} | Team: {team_name}")
 
-                # --- Database Logic ---
+                # --- NEW LOGIC: PREVENT DUPLICATE NODES ---
                 attributes = json.dumps({
                     "full_name": actual_name,
                     "birthday": birthday,
@@ -112,12 +102,17 @@ def scrape_deep_details():
                     "profile_url": url
                 })
 
-                cursor = conn.execute(
-                    'INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
-                    ('Player', username, attributes)
-                )
-                player_id = cursor.lastrowid
+                # Check if Player exists
+                player_row = conn.execute('SELECT NodeID FROM Nodes WHERE Name = ? AND NodeType = "Player"', (username,)).fetchone()
+                if player_row:
+                    player_id = player_row['NodeID']
+                    # Update attributes in case they changed
+                    conn.execute('UPDATE Nodes SET Attributes = ? WHERE NodeID = ?', (attributes, player_id))
+                else:
+                    cursor = conn.execute('INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)', ('Player', username, attributes))
+                    player_id = cursor.lastrowid
 
+                # Check if Team exists
                 team_row = conn.execute('SELECT NodeID FROM Nodes WHERE Name = ? AND NodeType = "Team"', (team_name,)).fetchone()
                 if not team_row:
                     cursor = conn.execute('INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
@@ -126,20 +121,24 @@ def scrape_deep_details():
                 else:
                     team_id = team_row['NodeID']
 
-                conn.execute('INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType) VALUES (?, ?, ?)',
-                             (player_id, team_id, 'Plays_For'))
+                # --- NEW LOGIC: PREVENT DUPLICATE EDGES ---
+                edge_row = conn.execute('SELECT EdgeID FROM Edges WHERE SourceNodeID = ? AND TargetNodeID = ? AND EdgeType = "Plays_For"', 
+                                       (player_id, team_id)).fetchone()
+                if not edge_row:
+                    conn.execute('INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType) VALUES (?, ?, ?)',
+                                 (player_id, team_id, 'Plays_For'))
 
+                conn.commit() # Commit each step to ensure data safety
                 count += 1
-                if count >= 20: break # Increased to 20 for your final run!
+                if count >= 20: break 
                 
             except Exception as e:
                 print(f"Error on {url}: {e}")
                 continue
 
-        conn.commit()
         conn.close()
         browser.close()
-        print(f"\nDone! Added {count} players with deep attributes.")
+        print(f"\nDone! Processed {count} items without creating duplicates.")
 
 if __name__ == "__main__":
     scrape_deep_details()

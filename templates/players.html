@@ -1,21 +1,43 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>Add Player Node</h2>
-<form method="POST">
-    <input name="name" placeholder="Full Name" required>
-    <input name="username" placeholder="Username" required>
-    <input name="country" placeholder="Country">
-    <button type="submit">Add Node</button>
-</form>
 
-<table>
-    <tr><th>ID</th><th>Name</th><th>Attributes (JSON)</th></tr>
-    {% for p in players %}
-    <tr>
-        <td>{{ p.NodeID }}</td>
-        <td>{{ p.Name }}</td>
-        <td>{{ p.Attributes }}</td>
-    </tr>
-    {% endfor %}
-</table>
+{% block content %}
+<style>
+    /* We keep your specific table styling here */
+    .player-container { max-width: 1000px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+    th { background: #007bff; color: white; text-transform: uppercase; font-size: 0.85em; }
+    tr:hover { background: #f1f7ff; }
+    .tag { background: #e2e2e2; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; color: #666; }
+</style>
+
+<div class="player-container">
+    <h1>Pro Player Database</h1>
+    <p>Dynamic inventory pulled from <code>esports.db</code></p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Handle</th>
+                <th>Full Name</th>
+                <th>Country</th>
+                <th>Birthday</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td><strong>{{ player.Name }}</strong></td>
+                <td>{{ player.attr.full_name if player.attr.full_name and player.attr.full_name != "Unknown" else "---" }}</td>
+                <td><span class="tag">{{ player.attr.country if player.attr.country else "N/A" }}</span></td>
+                <td>{{ player.attr.birthday if player.attr.birthday else "---" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('index') }}" style="text-decoration: none; color: #007bff;">← Back to Dashboard</a>
+    </div>
+</div>
 {% endblock %}
