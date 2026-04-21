@@ -1,270 +1,652 @@
 {% extends 'base.html' %}
 {% block content %}
 <style>
-    .graph-panel {
-        display: grid;
-        gap: 18px;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    main {
+        max-width: min(1580px, calc(100vw - 48px));
+        margin: 18px auto 28px auto;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        border-radius: 0;
     }
-    .graph-toolbar {
-        background: linear-gradient(180deg, #f7f4ff 0%, #f0ecfb 100%);
-        border: 1px solid #e1d9f4;
-        border-radius: 14px;
-        padding: 18px;
-    }
-    .graph-toolbar form {
+
+    .reports-shell {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) auto;
-        gap: 12px;
-        align-items: end;
+        gap: 16px;
+    }
+
+    .reports-header {
+        padding: 4px 4px 0 4px;
+    }
+
+    .reports-header h2 {
         margin: 0;
+        font-size: 1.75rem;
     }
-    .graph-toolbar label {
-        font-weight: 600;
-        color: #2f254f;
+
+    .subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0 4px;
+    }
+
+    .subtab-btn {
+        background: #11141c;
+        color: #d9deea;
+        border: 1px solid #252a36;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: none;
+    }
+
+    .subtab-btn:hover {
+        background: #171b25;
+        border-color: #3a4153;
+    }
+
+    .subtab-btn.active {
+        background: linear-gradient(90deg, rgba(147, 51, 234, 0.18) 0%, rgba(37, 99, 235, 0.18) 100%);
+        border-color: #5b4ca7;
+        color: #f3ecff;
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
         display: block;
+    }
+
+    .overview-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 14px;
+        align-items: start;
+        margin-top: 8px;
+    }
+
+    .graph-stage,
+    .graph-frame,
+    .query-frame,
+    .toolbar,
+    .info-panel,
+    .coming-soon {
+        background: rgba(10, 12, 18, 0.88);
+        border: none;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .graph-frame,
+    .query-frame,
+    .toolbar,
+    .info-panel,
+    .coming-soon {
+        padding: 14px;
+    }
+
+    #overview-cy {
+        width: 100%;
+        height: 820px;
+        border-radius: 6px;
+        border: none;
+        background:
+            radial-gradient(circle at 18% 16%, rgba(147, 51, 234, 0.07), transparent 28%),
+            radial-gradient(circle at 82% 20%, rgba(37, 99, 235, 0.07), transparent 30%),
+            radial-gradient(circle at 48% 78%, rgba(6, 182, 212, 0.06), transparent 26%),
+            #05060a;
+    }
+
+    #subgraph-cy {
+        width: 100%;
+        height: 700px;
+        border-radius: 6px;
+        border: none;
+        background:
+            radial-gradient(circle at 22% 20%, rgba(147, 51, 234, 0.06), transparent 26%),
+            radial-gradient(circle at 78% 28%, rgba(37, 99, 235, 0.06), transparent 26%),
+            #05060a;
+    }
+
+    .info-panel {
+        min-height: 820px;
+        position: sticky;
+        top: 92px;
+    }
+
+    .info-panel h4 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #f3ecff;
+        font-size: 1.02rem;
+    }
+
+    .info-muted {
+        color: #99a3b7;
+        font-size: 0.88rem;
+        line-height: 1.4;
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(147, 51, 234, 0.22) 0%, rgba(37, 99, 235, 0.22) 100%);
+        color: #eae3ff;
+        font-size: 0.8rem;
+        font-weight: 700;
         margin-bottom: 8px;
     }
-    .graph-meta {
+
+    .detail-block {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #1c2230;
+    }
+
+    .detail-list,
+    .connection-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0 0;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 12px;
+        gap: 8px;
     }
-    .meta-card {
-        background: #faf8ff;
-        border: 1px solid #e7def8;
-        border-radius: 12px;
-        padding: 14px;
+
+    .detail-list li,
+    .connection-list li {
+        background: #0d1017;
+        border: none;
+        border-radius: 5px;
+        padding: 9px 11px;
+        color: #d9deea;
+        font-size: 0.88rem;
     }
-    .meta-card strong {
-        display: block;
-        color: #2f254f;
-        margin-bottom: 6px;
-    }
-    #cy-wrap {
-        background: linear-gradient(180deg, #fbfaff 0%, #f4f0fc 100%);
-        border: 1px solid #ddd4ef;
-        border-radius: 18px;
-        padding: 14px;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
-    }
-    #cy {
-        width: 100%;
-        height: 620px;
-        background:
-            radial-gradient(circle at 1px 1px, rgba(111, 92, 170, 0.10) 1px, transparent 0);
-        background-size: 26px 26px;
-        border-radius: 14px;
-        border: 1px solid #e0d9f1;
-    }
+
     .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 14px;
+        gap: 10px;
+        margin-top: 12px;
     }
+
     .legend-item {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.95rem;
-        color: #554f67;
-        background: white;
-        border: 1px solid #e5def5;
+        font-size: 0.85rem;
+        color: #c7cde0;
+        background: rgba(17, 20, 28, 0.95);
+        border: none;
         border-radius: 999px;
         padding: 8px 12px;
     }
+
     .legend-swatch {
         width: 14px;
         height: 14px;
-        border-radius: 50%;
         display: inline-block;
     }
+
     .legend-swatch.player {
-        background: #33285b;
+        background: linear-gradient(135deg, #8b5cf6 0%, #4338ca 100%);
+        border-radius: 50%;
     }
+
     .legend-swatch.team {
-        background: #8b5cf6;
+        background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
         border-radius: 4px;
     }
+
+    .legend-swatch.tournament {
+        background: linear-gradient(135deg, #c026d3 0%, #7c3aed 55%, #2563eb 100%);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
+
+    .query-layout {
+        display: grid;
+        gap: 14px;
+        margin-top: 8px;
+    }
+
+    .toolbar form {
+        display: grid;
+        grid-template-columns: minmax(230px, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+        margin: 0;
+    }
+
+    .toolbar label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #ece4ff;
+    }
+
     .empty-state {
         text-align: center;
-        padding: 48px 24px;
-        background: linear-gradient(180deg, #faf8ff 0%, #f3effc 100%);
-        border: 1px dashed #d8cdec;
-        border-radius: 16px;
-        color: #615b73;
+        padding: 40px 24px;
+        background: rgba(10, 12, 18, 0.9);
+        border: none;
+        border-radius: 8px;
+        color: #8f98ab;
     }
-    .graph-title {
-        margin-bottom: 6px;
+
+    .coming-soon h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .small-note {
+        color: #9aa2b3;
+        font-size: 0.88rem;
+        margin-top: 8px;
+    }
+
+    @media (max-width: 1200px) {
+        .overview-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .info-panel {
+            min-height: auto;
+            position: static;
+        }
     }
 </style>
 
-<div class="graph-panel">
-    <div>
-        <h2 class="graph-title">Player Network Visualization</h2>
-        <p>Visualize a selected player and their connected team network while keeping the original project styling.</p>
+<div class="reports-shell">
+    <div class="reports-header">
+        <h2>Reports</h2>
     </div>
 
-    <div class="graph-toolbar">
-        <form method="POST">
-            <div>
-                <label for="player_name">Select a Player</label>
-                <select name="player_name" id="player_name">
-                    {% for p in players %}
-                        <option value="{{ p.Name }}" {% if p.Name == selected_player %}selected{% endif %}>{{ p.Name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit">Visualize Network</button>
-        </form>
+    <div class="subtabs">
+        <button class="subtab-btn active" data-tab="overview-tab">Overview Graph</button>
+        <button class="subtab-btn" data-tab="query1-tab">Query 1</button>
+        <button class="subtab-btn" data-tab="query2-tab">Query 2</button>
+        <button class="subtab-btn" data-tab="query3-tab">Query 3</button>
     </div>
 
-    {% if selected_player %}
-        <div class="graph-meta">
-            <div class="meta-card">
-                <strong>Focused Player</strong>
-                {{ selected_player }}
+    <section id="overview-tab" class="tab-pane active">
+        <div class="overview-layout">
+            <div class="graph-stage">
+                <div class="graph-frame">
+                    <div id="overview-cy"></div>
+                    <div class="legend">
+                        <div class="legend-item"><span class="legend-swatch player"></span> Player</div>
+                        <div class="legend-item"><span class="legend-swatch team"></span> Team</div>
+                        <div class="legend-item"><span class="legend-swatch tournament"></span> Tournament</div>
+                        <div class="legend-item">Edges: Plays_For, Played_In, Won_By</div>
+                    </div>
+                </div>
             </div>
-            <div class="meta-card">
-                <strong>Included Connections</strong>
-                Selected player, linked teams, and teammates.
-            </div>
-            <div class="meta-card">
-                <strong>Layout</strong>
-                Concentric layout for a cleaner presentation graph.
-            </div>
-        </div>
 
-        <div id="cy-wrap">
-            <div id="cy"></div>
-            <div class="legend">
-                <div class="legend-item"><span class="legend-swatch player"></span> Player node</div>
-                <div class="legend-item"><span class="legend-swatch team"></span> Team node</div>
-                <div class="legend-item">Edges represent <strong>Plays_For</strong> relationships</div>
+            <aside class="info-panel" id="info-panel">
+                <h4>Node Details</h4>
+                <div class="empty-state">
+                    No node selected yet.
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <section id="query1-tab" class="tab-pane">
+        <div class="query-layout">
+            <div class="toolbar">
+                <form method="POST">
+                    <div>
+                        <label for="player_name">Select a Player</label>
+                        <select name="player_name" id="player_name">
+                            {% for p in players %}
+                                <option value="{{ p.Name }}" {% if p.Name == selected_player %}selected{% endif %}>{{ p.Name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit">Visualize Network</button>
+                </form>
             </div>
+
+            {% if selected_player %}
+                <div class="query-frame">
+                    <div id="subgraph-cy"></div>
+                    <div class="legend">
+                        <div class="legend-item"><span class="legend-swatch player"></span> Player</div>
+                        <div class="legend-item"><span class="legend-swatch team"></span> Team</div>
+                        <div class="legend-item">Edges represent <strong>Plays_For</strong></div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    Choose a player above to generate the focused player subgraph.
+                </div>
+            {% endif %}
         </div>
-    {% else %}
-        <div class="empty-state">
-            Choose a player above to generate the Cytoscape network view.
+    </section>
+
+    <section id="query2-tab" class="tab-pane">
+        <div class="coming-soon">
+            <h3>Query 2: Tournament Threshold Network</h3>
+            <p class="small-note">Threshold input + Participant/Winner toggle goes here.</p>
         </div>
-    {% endif %}
+    </section>
+
+    <section id="query3-tab" class="tab-pane">
+        <div class="coming-soon">
+            <h3>Query 3: Q1 Tournament Network</h3>
+            <p class="small-note">Q1 tournaments with prize pool > 1M go here.</p>
+        </div>
+    </section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
 <script>
+    const tabButtons = document.querySelectorAll('.subtab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.tab;
+
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+
+            btn.classList.add('active');
+            document.getElementById(target).classList.add('active');
+        });
+    });
+
+    function buildInfoPanel(data) {
+        const panel = document.getElementById('info-panel');
+
+        if (!data) {
+            panel.innerHTML = `
+                <h4>Node Details</h4>
+                <div class="empty-state">No node selected yet.</div>
+            `;
+            return;
+        }
+
+        const attrs = data.attributes || {};
+        const connections = data.connections || [];
+
+        const attrItems = Object.keys(attrs).length
+            ? Object.entries(attrs).map(([key, value]) => `
+                <li><strong>${key}</strong>: ${value === null || value === '' ? 'N/A' : value}</li>
+            `).join('')
+            : '<li>No stored attributes.</li>';
+
+        const connectionItems = connections.length
+            ? connections.map(item => `
+                <li>
+                    <strong>${item.name}</strong> (${item.type})
+                    <br>
+                    <span class="info-muted">via ${item.via}</span>
+                </li>
+            `).join('')
+            : '<li>No direct connections found.</li>';
+
+        panel.innerHTML = `
+            <h4>${data.name}</h4>
+            <div class="pill">${data.type}</div>
+
+            <div class="detail-block">
+                <strong>Attributes</strong>
+                <ul class="detail-list">${attrItems}</ul>
+            </div>
+
+            <div class="detail-block">
+                <strong>Connected Nodes</strong>
+                <ul class="connection-list">${connectionItems}</ul>
+            </div>
+        `;
+    }
+
+    fetch('/api/graph-data/all')
+        .then(res => res.json())
+        .then(data => {
+            const rawElements = data.elements || [];
+
+            // remove isolated nodes from overview
+            const edgeElements = rawElements.filter(el => el.data && el.data.source && el.data.target);
+            const connectedIds = new Set();
+            edgeElements.forEach(el => {
+                connectedIds.add(el.data.source);
+                connectedIds.add(el.data.target);
+            });
+
+            const nodeElements = rawElements.filter(el => el.data && el.data.id && !el.data.source)
+                .filter(el => connectedIds.has(el.data.id));
+
+            const elements = [...nodeElements, ...edgeElements];
+
+            const overviewCy = cytoscape({
+                container: document.getElementById('overview-cy'),
+                elements: elements,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': '',
+                        'font-family': 'Inter, system-ui, sans-serif',
+                        'text-opacity': 0,
+                        'overlay-padding': 4,
+                        'opacity': 0.96
+                    }
+                },
+                {
+                    selector: 'node[type="player"]',
+                    style: {
+                        'shape': 'ellipse',
+                        'background-color': '#7c3aed',
+                        'width': 13,
+                        'height': 13,
+                        'border-width': 0,
+                        'shadow-blur': 10,
+                        'shadow-color': '#7c3aed',
+                        'shadow-opacity': 0.38
+                    }
+                },
+                {
+                    selector: 'node[type="team"]',
+                    style: {
+                        'shape': 'round-rectangle',
+                        'background-color': '#2563eb',
+                        'width': 16,
+                        'height': 16,
+                        'border-width': 0,
+                        'shadow-blur': 10,
+                        'shadow-color': '#2563eb',
+                        'shadow-opacity': 0.36
+                    }
+                },
+                {
+                    selector: 'node[type="tournament"]',
+                    style: {
+                        'shape': 'diamond',
+                        'background-color': '#06b6d4',
+                        'width': 15,
+                        'height': 15,
+                        'border-width': 0,
+                        'shadow-blur': 10,
+                        'shadow-color': '#06b6d4',
+                        'shadow-opacity': 0.36
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'curve-style': 'haystack',
+                        'width': 1.1,
+                        'line-fill': 'linear-gradient',
+                        'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
+                        'line-gradient-stop-positions': '0 55 100',
+                        'opacity': 0.67,
+                        'target-arrow-shape': 'none'
+                    }
+                },
+                {
+                    selector: ':selected',
+                    style: {
+                        'border-width': 0,
+                        'opacity': 1
+                    }
+                },
+                {
+                    selector: '.faded',
+                    style: {
+                        'opacity': 0.05
+                    }
+                },
+                {
+                    selector: '.highlighted',
+                    style: {
+                        'opacity': 1,
+                        'width': 2.2,
+                        'line-fill': 'linear-gradient',
+                        'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
+                    }
+                }
+            ],
+            layout: {
+                name: 'cose',
+                animate: false,
+                fit: true,
+                padding: 28,
+                nodeRepulsion: 220000,
+                idealEdgeLength: 58,
+                edgeElasticity: 80,
+                gravity: 0.12,
+                componentSpacing: 140,
+                nodeOverlap: 180,
+                nestingFactor: 0.9,
+                numIter: 2200,
+                initialTemp: 180,
+                coolingFactor: 0.96,
+                minTemp: 1.0
+            }});
+
+            overviewCy.on('tap', 'node', function(evt) {
+                const node = evt.target;
+                const neighborhood = node.closedNeighborhood();
+
+                overviewCy.elements().removeClass('faded highlighted');
+                overviewCy.elements().difference(neighborhood).addClass('faded');
+                neighborhood.addClass('highlighted');
+
+                fetch('/api/node-details/' + node.id())
+                    .then(res => res.json())
+                    .then(detailData => buildInfoPanel(detailData))
+                    .catch(() => buildInfoPanel(null));
+            });
+
+            overviewCy.on('tap', function(evt) {
+                if (evt.target === overviewCy) {
+                    overviewCy.elements().removeClass('faded highlighted');
+                    buildInfoPanel(null);
+                }
+            });
+        })
+        .catch(() => {
+            document.getElementById('overview-tab').innerHTML =
+                '<div class="empty-state">The overview graph could not be loaded.</div>';
+        });
+
     {% if selected_player %}
     fetch('/api/graph-data/' + encodeURIComponent({{ selected_player|tojson }}))
         .then(res => res.json())
         .then(data => {
-            var elements = data.elements || [];
+            const elements = data.elements || [];
 
-            var cy = cytoscape({
-                container: document.getElementById('cy'),
+            cytoscape({
+                container: document.getElementById('subgraph-cy'),
                 elements: elements,
                 style: [
                     {
                         selector: 'node',
                         style: {
+                            'font-family': 'Inter, system-ui, sans-serif',
                             'label': 'data(label)',
-                            'background-color': '#33285b',
                             'color': '#ffffff',
-                            'font-size': 12,
-                            'font-weight': '700',
+                            'font-size': 10,
+                            'font-weight': '500',
                             'text-wrap': 'wrap',
-                            'text-max-width': 110,
+                            'text-max-width': 86,
                             'text-valign': 'center',
                             'text-halign': 'center',
-                            'text-outline-width': 3,
-                            'text-outline-color': '#33285b',
-                            'width': 58,
-                            'height': 58,
-                            'border-width': 3,
-                            'border-color': '#ffffff',
-                            'overlay-padding': 6,
-                            'shadow-blur': 18,
-                            'shadow-color': 'rgba(51, 40, 91, 0.22)',
-                            'shadow-offset-y': 6,
-                            'shadow-opacity': 1
+                            'text-outline-width': 0,
+                            'width': 48,
+                            'height': 48,
+                            'border-width': 0
+                        }
+                    },
+                    {
+                        selector: 'node[type="player"]',
+                        style: {
+                            'shape': 'ellipse',
+                            'background-color': '#8b5cf6',
+                            'shadow-blur': 14,
+                            'shadow-color': '#7c3aed',
+                            'shadow-opacity': 0.36
                         }
                     },
                     {
                         selector: 'node[type="team"]',
                         style: {
                             'shape': 'round-rectangle',
-                            'background-color': '#8b5cf6',
-                            'text-outline-color': '#8b5cf6',
-                            'width': 76,
-                            'height': 46,
-                            'padding': '10px'
+                            'background-color': '#2563eb',
+                            'width': 70,
+                            'height': 34,
+                            'padding': '4px'
                         }
                     },
                     {
                         selector: 'edge',
                         style: {
                             'curve-style': 'bezier',
-                            'width': 4,
-                            'line-color': '#b7a7e8',
-                            'target-arrow-color': '#b7a7e8',
-                            'target-arrow-shape': 'triangle',
-                            'arrow-scale': 1.1,
-                            'opacity': 0.95,
+                            'width': 2.4,
+                            'line-fill': 'linear-gradient',
+                            'line-gradient-stop-colors': '#a855f7 #3b82f6',
+                            'line-gradient-stop-positions': '0 100',
+                            'target-arrow-shape': 'none',
+                            'opacity': 0.82,
                             'label': 'data(label)',
-                            'font-size': 10,
-                            'font-weight': '600',
-                            'color': '#6a6480',
-                            'text-background-color': '#ffffff',
-                            'text-background-opacity': 0.9,
-                            'text-background-padding': 3,
+                            'font-family': 'Inter, system-ui, sans-serif',
+                            'font-size': 8,
+                            'font-weight': '500',
+                            'color': '#cfd6e8',
+                            'text-background-color': '#0f1218',
+                            'text-background-opacity': 0.82,
+                            'text-background-padding': 2,
                             'text-rotation': 'autorotate'
-                        }
-                    },
-                    {
-                        selector: ':selected',
-                        style: {
-                            'border-width': 4,
-                            'border-color': '#f59e0b',
-                            'line-color': '#f59e0b',
-                            'target-arrow-color': '#f59e0b'
                         }
                     }
                 ],
                 layout: {
                     name: 'concentric',
                     fit: true,
-                    padding: 40,
+                    padding: 34,
                     animate: true,
                     animationDuration: 700,
-                    spacingFactor: 1.15,
+                    spacingFactor: 1.05,
                     concentric: function(node) {
                         return node.data('type') === 'team' ? 2 : 1;
                     },
                     levelWidth: function() { return 1; }
                 }
             });
-
-            cy.on('tap', 'node', function(evt) {
-                var node = evt.target;
-                cy.elements().removeClass('faded');
-                var neighborhood = node.closedNeighborhood();
-                cy.elements().difference(neighborhood).addClass('faded');
-            });
-
-            cy.on('tap', function(evt) {
-                if (evt.target === cy) {
-                    cy.elements().removeClass('faded');
-                }
-            });
-
-            cy.style()
-                .selector('.faded')
-                .style({
-                    'opacity': 0.18,
-                    'text-opacity': 0.25
-                })
-                .update();
         })
         .catch(() => {
-            document.getElementById('cy-wrap').innerHTML = '<div class="empty-state">The graph data could not be loaded.</div>';
+            document.getElementById('query1-tab').innerHTML =
+                '<div class="empty-state">The player subgraph could not be loaded.</div>';
         });
     {% endif %}
 </script>

@@ -15,12 +15,33 @@ def from_json_filter(value):
 
 # --- DATABASE HELPER ---
 def get_db_connection():
-    # Absolute path ensures the database is found regardless of how the script is launched
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, 'esports.db')
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
+
+# --- SMALL HELPERS ---
+def safe_json_load(value):
+    try:
+        return json.loads(value) if value else {}
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+def get_connected_nodes(conn, node_id):
+    query = '''
+        SELECT DISTINCT n.NodeID, n.Name, n.NodeType, e.EdgeType
+        FROM Edges e
+        JOIN Nodes n
+          ON (
+              (e.SourceNodeID = ? AND n.NodeID = e.TargetNodeID)
+              OR
+              (e.TargetNodeID = ? AND n.NodeID = e.SourceNodeID)
+          )
+        WHERE e.SourceNodeID = ? OR e.TargetNodeID = ?
+        ORDER BY n.NodeType, n.Name
+    '''
+    return conn.execute(query, (node_id, node_id, node_id, node_id)).fetchall()
 
 # --- ROUTES ---
 
@@ -55,10 +76,12 @@ def teams():
             'founded': request.form.get('founded_year'),
             'ranking': request.form.get('ranking')
         })
-        conn.execute('INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
-                     ('Team', name, attrs))
+        conn.execute(
+            'INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
+            ('Team', name, attrs)
+        )
         conn.commit()
-    
+
     raw_teams = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Team"').fetchall()
     processed_teams = []
     for t in raw_teams:
@@ -78,10 +101,12 @@ def tournaments():
             'year': request.form['founded_year'],
             'prize_pool': request.form['prize_pool']
         })
-        conn.execute('INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
-                     ('Tournament', name, attrs))
+        conn.execute(
+            'INSERT INTO Nodes (NodeType, Name, Attributes) VALUES (?, ?, ?)',
+            ('Tournament', name, attrs)
+        )
         conn.commit()
-    
+
     raw_tournaments = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Tournament"').fetchall()
     processed_t = []
     for t in raw_tournaments:
@@ -97,8 +122,10 @@ def plays_for():
     if request.method == 'POST':
         source = request.form['player_id']
         target = request.form['team_id']
-        conn.execute('INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType) VALUES (?, ?, ?)',
-                     (source, target, 'Plays_For'))
+        conn.execute(
+            'INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType) VALUES (?, ?, ?)',
+            (source, target, 'Plays_For')
+        )
         conn.commit()
 
     query = '''
@@ -118,16 +145,15 @@ def plays_for():
 def played_in():
     conn = get_db_connection()
     if request.method == 'POST':
-        # To align with the scraper, Tournament should be the SourceNode
-        # and Team should be the TargetNode.
-        tourney_id = request.form['tournament_id']
+        tournament_id = request.form['tournament_id']
         team_id = request.form['team_id']
         meta = json.dumps({'date': request.form.get('date_played')})
-        conn.execute('INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType, Metadata) VALUES (?, ?, ?, ?)',
-                     (tourney_id, team_id, 'Played_In', meta))
+        conn.execute(
+            'INSERT INTO Edges (SourceNodeID, TargetNodeID, EdgeType, Metadata) VALUES (?, ?, ?, ?)',
+            (tournament_id, team_id, 'Played_In', meta)
+        )
         conn.commit()
 
-    # Query aligns n1 as Tournament (Source) and n2 as Team (Target)
     query = '''
         SELECT e.EdgeID, n1.Name as tournament_name, n2.Name as team_name, e.Metadata
         FROM Edges e
@@ -144,38 +170,41 @@ def played_in():
 @app.route('/tournament/<int:node_id>')
 def tournament_details(node_id):
     conn = get_db_connection()
-    
-    tournament = conn.execute('SELECT * FROM Nodes WHERE NodeID = ?', (node_id,)).fetchone()
-    
+
+    tournament = conn.execute(
+        'SELECT * FROM Nodes WHERE NodeID = ?',
+        (node_id,)
+    ).fetchone()
+
     if not tournament:
         conn.close()
         return "Tournament not found", 404
 
     details = from_json_filter(tournament['Attributes'])
 
-    # Fetches Winner where Tournament is Source and Team is Target
     winner = conn.execute('''
-        SELECT Nodes.Name, Nodes.NodeID 
-        FROM Nodes 
-        JOIN Edges ON Nodes.NodeID = Edges.TargetNodeID 
+        SELECT Nodes.Name, Nodes.NodeID
+        FROM Nodes
+        JOIN Edges ON Nodes.NodeID = Edges.TargetNodeID
         WHERE Edges.SourceNodeID = ? AND Edges.EdgeType = "Won_By"
     ''', (node_id,)).fetchone()
 
-    # Fetches Participants where Tournament is Source and Team is Target
     participants = conn.execute('''
-        SELECT Nodes.Name, Nodes.NodeID 
-        FROM Nodes 
-        JOIN Edges ON Nodes.NodeID = Edges.TargetNodeID 
+        SELECT Nodes.Name, Nodes.NodeID
+        FROM Nodes
+        JOIN Edges ON Nodes.NodeID = Edges.TargetNodeID
         WHERE Edges.SourceNodeID = ? AND Edges.EdgeType = "Played_In"
         ORDER BY Nodes.Name ASC
     ''', (node_id,)).fetchall()
 
     conn.close()
-    return render_template('tournament_details.html', 
-                           tournament=tournament, 
-                           details=details,
-                           winner=winner, 
-                           participants=participants)
+    return render_template(
+        'tournament_details.html',
+        tournament=tournament,
+        details=details,
+        winner=winner,
+        participants=participants
+    )
 
 @app.route('/reports', methods=['GET', 'POST'])
 def reports_page():
@@ -183,27 +212,121 @@ def reports_page():
     selected_player = None
     if request.method == 'POST':
         selected_player = request.form.get('player_name')
-    
-    players = conn.execute('SELECT Name FROM Nodes WHERE NodeType = "Player"').fetchall()
+
+    players = conn.execute(
+        'SELECT Name FROM Nodes WHERE NodeType = "Player" ORDER BY Name'
+    ).fetchall()
     conn.close()
     return render_template('reports.html', players=players, selected_player=selected_player)
 
+# --- OVERVIEW GRAPH API ---
+@app.route('/api/graph-data/all')
+def all_graph_data():
+    conn = get_db_connection()
+
+    nodes = conn.execute('''
+        SELECT NodeID, Name, NodeType, Attributes
+        FROM Nodes
+        WHERE NodeType IN ("Player", "Team", "Tournament")
+        ORDER BY NodeType, Name
+    ''').fetchall()
+
+    edges = conn.execute('''
+        SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+        FROM Edges
+        WHERE EdgeType IN ("Plays_For", "Played_In", "Won_By")
+    ''').fetchall()
+
+    elements = []
+
+    for node in nodes:
+        attrs = safe_json_load(node['Attributes'])
+        elements.append({
+            'data': {
+                'id': str(node['NodeID']),
+                'label': node['Name'],
+                'type': node['NodeType'].lower(),
+                'nodeType': node['NodeType'],
+                'attributes': attrs
+            }
+        })
+
+    for edge in edges:
+        elements.append({
+            'data': {
+                'id': f"e{edge['EdgeID']}",
+                'source': str(edge['SourceNodeID']),
+                'target': str(edge['TargetNodeID']),
+                'label': edge['EdgeType'],
+                'edgeType': edge['EdgeType'],
+                'metadata': safe_json_load(edge['Metadata'])
+            }
+        })
+
+    conn.close()
+    return jsonify({'elements': elements})
+
+# --- CLICK DETAILS API FOR OVERVIEW GRAPH ---
+@app.route('/api/node-details/<int:node_id>')
+def node_details(node_id):
+    conn = get_db_connection()
+
+    node = conn.execute('''
+        SELECT NodeID, Name, NodeType, Attributes
+        FROM Nodes
+        WHERE NodeID = ?
+    ''', (node_id,)).fetchone()
+
+    if not node:
+        conn.close()
+        return jsonify({'error': 'Node not found'}), 404
+
+    attrs = safe_json_load(node['Attributes'])
+    connected = get_connected_nodes(conn, node_id)
+
+    connections = [
+        {
+            'id': row['NodeID'],
+            'name': row['Name'],
+            'type': row['NodeType'],
+            'via': row['EdgeType']
+        }
+        for row in connected
+    ]
+
+    conn.close()
+    return jsonify({
+        'id': node['NodeID'],
+        'name': node['Name'],
+        'type': node['NodeType'],
+        'attributes': attrs,
+        'connections': connections
+    })
+
+# --- EXISTING PLAYER SUBGRAPH API ---
 @app.route('/api/graph-data/<player_name>')
 def filtered_graph_data(player_name):
     conn = get_db_connection()
-    player = conn.execute('SELECT NodeID, Name FROM Nodes WHERE Name = ? AND NodeType = "Player"', (player_name,)).fetchone()
-    
+    player = conn.execute(
+        'SELECT NodeID, Name FROM Nodes WHERE Name = ? AND NodeType = "Player"',
+        (player_name,)
+    ).fetchone()
+
     if not player:
         conn.close()
         return jsonify({'elements': []})
-    
+
     p_id = player['NodeID']
     team_ids_query = 'SELECT TargetNodeID FROM Edges WHERE SourceNodeID = ? AND EdgeType = "Plays_For"'
     team_ids = [row['TargetNodeID'] for row in conn.execute(team_ids_query, (p_id,)).fetchall()]
 
     if not team_ids:
         conn.close()
-        return jsonify({'elements': [{'data': {'id': str(p_id), 'label': player['Name'], 'type': 'player'}}]})
+        return jsonify({
+            'elements': [
+                {'data': {'id': str(p_id), 'label': player['Name'], 'type': 'player'}}
+            ]
+        })
 
     placeholders = ','.join(['?'] * len(team_ids))
     edges_query = f'''
@@ -213,24 +336,44 @@ def filtered_graph_data(player_name):
         WHERE e.TargetNodeID IN ({placeholders}) AND e.EdgeType = "Plays_For"
     '''
     relevant_edges = conn.execute(edges_query, team_ids).fetchall()
-
-    team_nodes = conn.execute(f'SELECT NodeID, Name FROM Nodes WHERE NodeID IN ({placeholders})', team_ids).fetchall()
+    team_nodes = conn.execute(
+        f'SELECT NodeID, Name FROM Nodes WHERE NodeID IN ({placeholders})',
+        team_ids
+    ).fetchall()
     conn.close()
 
     elements = []
     seen_nodes = set()
 
     for team in team_nodes:
-        elements.append({'data': {'id': str(team['NodeID']), 'label': team['Name'], 'type': 'team'}})
+        elements.append({
+            'data': {
+                'id': str(team['NodeID']),
+                'label': team['Name'],
+                'type': 'team'
+            }
+        })
         seen_nodes.add(team['NodeID'])
 
     for edge in relevant_edges:
         player_id = edge['SourceNodeID']
         team_id = edge['TargetNodeID']
         if player_id not in seen_nodes:
-            elements.append({'data': {'id': str(player_id), 'label': edge['player_name'], 'type': 'player'}})
+            elements.append({
+                'data': {
+                    'id': str(player_id),
+                    'label': edge['player_name'],
+                    'type': 'player'
+                }
+            })
             seen_nodes.add(player_id)
-        elements.append({'data': {'source': str(player_id), 'target': str(team_id), 'label': 'Plays_For'}})
+        elements.append({
+            'data': {
+                'source': str(player_id),
+                'target': str(team_id),
+                'label': 'Plays_For'
+            }
+        })
 
     return jsonify({'elements': elements})
 
