@@ -2,7 +2,7 @@
 
 {% block content %}
 
-    <div class="card" style="background: #eef2ff; border: 1px solid #ddd; margin-bottom: 30px; padding: 20px; border-radius: 8px;">
+    <div class="card" style="background: #000000; border: 1px solid #000000; margin-bottom: 30px; padding: 20px; border-radius: 8px;">
         <h3 style="margin-top: 0; color: #33285b;">Add New Tournament</h3>
         <form method="POST">
             <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px;">
@@ -33,16 +33,16 @@
             {% for tournament in tournaments %}
             <tr>
                 <td>
-                    <div style="font-weight: bold; color: #33285b;">{{ tournament.Name }}</div>
+                    <div style="color: #ebe5ff;">{{ tournament.Name }}</div>
                     </td>
                 <td>{{ tournament.attr.get('country', 'Online') }}</td>
                 <td>{{ tournament.attr.get('year', 'N/A') }}</td>
-                <td style="color: #28a745; font-weight: bold;">
+                <td style="color: #7affd7; font-weight: bold;">
                     {{ tournament.attr.get('prize_pool', 'TBD') }}
                 </td>
                 <td style="text-align: center;">
                     <a href="/tournament/{{ tournament.NodeID }}" 
-                       style="text-decoration: none; background: #eef2ff; color: #33285b; padding: 6px 12px; border-radius: 4px; border: 1px solid #33285b; font-size: 0.85rem; display: inline-block;">
+                       style="text-decoration: none; background: #eef2ff; color: #33285b; padding: 6px 12px; border-radius: 4px; border: 1px solid #33285b; font-size: 0.84rem; display: inline-block;">
                         View Results
                     </a>
                 </td>

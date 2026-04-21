@@ -198,7 +198,8 @@ def index():
     return render_template(
         'reports.html',
         players=players,
-        counts={'nodes': nodes, 'edges': edges}
+        counts={'nodes': nodes, 'edges': edges},
+        active_page='reports'
     )
 
 @app.route('/players')
@@ -211,7 +212,7 @@ def players_page():
         p_dict['attr'] = from_json_filter(p['Attributes'])
         processed_players.append(p_dict)
     conn.close()
-    return render_template('players.html', players=processed_players)
+    return render_template('players.html', players=processed_players, active_page='players')
 
 @app.route('/teams', methods=['GET', 'POST'])
 def teams():
@@ -237,7 +238,7 @@ def teams():
         t_dict['attr'] = from_json_filter(t['Attributes'])
         processed_teams.append(t_dict)
     conn.close()
-    return render_template('teams.html', teams=processed_teams)
+    return render_template('teams.html', teams=processed_teams, active_page='teams')
 
 @app.route('/tournaments', methods=['GET', 'POST'])
 def tournaments():
@@ -262,7 +263,7 @@ def tournaments():
         t_dict['attr'] = from_json_filter(t['Attributes'])
         processed_t.append(t_dict)
     conn.close()
-    return render_template('tournaments.html', tournaments=processed_t)
+    return render_template('tournaments.html', tournaments=processed_t, active_page='tournaments')
 
 @app.route('/plays_for', methods=['GET', 'POST'])
 def plays_for():
@@ -291,7 +292,7 @@ def plays_for():
     players = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Player"').fetchall()
     teams = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Team"').fetchall()
     conn.close()
-    return render_template('plays_for.html', rows=rows, players=players, teams=teams)
+    return render_template('plays_for.html', rows=rows, players=players, teams=teams, active_page='plays_for')
 
 @app.route('/played_in', methods=['GET', 'POST'])
 def played_in():
@@ -327,7 +328,7 @@ def played_in():
     teams = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Team"').fetchall()
     tournaments = conn.execute('SELECT * FROM Nodes WHERE NodeType = "Tournament"').fetchall()
     conn.close()
-    return render_template('played_in.html', rows=rows, teams=teams, tournaments=tournaments)
+    return render_template('played_in.html', rows=rows, teams=teams, tournaments=tournaments, active_page='played_in')
 
 @app.route('/tournament/<int:node_id>')
 def tournament_details(node_id):
@@ -365,7 +366,8 @@ def tournament_details(node_id):
         tournament=tournament,
         details=details,
         winner=winner,
-        participants=participants
+        participants=participants,
+        active_page='tournaments'
     )
 
 @app.route('/reports')

@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Competitive Esports Network</title>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #5d5863;
-            --panel: #05060a 0%, #a789d4 100%;
             --panel-soft: #1a1d25;
             --line: #2a2f3a;
             --text: #eef1f7;
@@ -105,7 +104,7 @@
             padding: 24px 12px 20px;
             font-weight: 600;
             border-bottom: 2px solid transparent;
-            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
         }
 
         nav.main-nav a:hover {
@@ -114,10 +113,16 @@
             background: rgba(255, 255, 255, 0.03);
         }
 
+        nav.main-nav a.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: transparent;
+        }
+
         main {
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 24px auto;
-            background: var(--panel);
+            background: linear-gradient(var(--panel));
             padding: 24px;
             border-radius: 8px;
             box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
@@ -134,7 +139,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
+            margin-top: 8px;
             overflow: hidden;
             border-radius: 12px;
         }
@@ -163,7 +168,7 @@
             display: grid;
             gap: 10px;
             margin-top: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 0;
         }
 
         input, select, button {
@@ -177,6 +182,7 @@
         input, select {
             background: #171a22;
             color: var(--text);
+            width: 100%;
         }
 
         input:focus, select:focus {
@@ -205,7 +211,7 @@
             gap: 12px;
             margin-bottom: 24px;
         }
-        
+
         .card {
             background: linear-gradient(180deg, #050a06 0%, #534f59 100%);
             padding: 16px;
@@ -219,15 +225,6 @@
             color: #f3ecff;
         }
 
-        .flash {
-            background: #1c2a20;
-            color: #dff7e6;
-            border: 1px solid #2f6a40;
-            padding: 10px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-        }
-
         .section-note {
             background: var(--panel-soft);
             border: none;
@@ -237,6 +234,86 @@
             color: var(--muted);
         }
 
+        .data-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .side-card {
+            background: rgba(10, 12, 18, 0.88);
+            border-radius: 8px;
+            padding: 16px;
+            position: sticky;
+            top: 92px;
+        }
+
+        .side-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 1.08rem;
+        }
+
+        .side-card p {
+            margin: 0 0 14px 0;
+            font-size: 0.88rem;
+            line-height: 1.4;
+            color: #9aa2b3;
+        }
+
+        .side-card label {
+            display: block;
+            margin-bottom: 6px;
+            color: #efe6ff;
+            font-size: 0.83rem;
+            font-weight: 600;
+        }
+
+        .side-card button,
+        .side-card .full-width-btn {
+            width: 100%;
+        }
+
+        .content-card {
+            min-width: 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+        .page-chip {
+            background: #33285b;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1100px) {
+            main {
+                max-width: min(1000px, calc(100vw - 32px));
+                padding: 20px;
+            }
+
+            .data-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .side-card {
+                position: static;
+            }
+        }
     </style>
 </head>
 <body>
@@ -251,12 +328,12 @@
             </a>
 
             <nav class="main-nav">
-                <a href="{{ url_for('index') }}">Reports</a>
-                <a href="{{ url_for('players_page') }}">Players</a>
-                <a href="{{ url_for('teams') }}">Teams</a>
-                <a href="{{ url_for('tournaments') }}">Tournaments</a>
-                <a href="{{ url_for('plays_for') }}">Plays For</a>
-                <a href="{{ url_for('played_in') }}">Played In</a>
+                <a href="{{ url_for('index') }}" class="{{ 'active' if active_page == 'reports' else '' }}">Reports</a>
+                <a href="{{ url_for('players_page') }}" class="{{ 'active' if active_page == 'players' else '' }}">Players</a>
+                <a href="{{ url_for('teams') }}" class="{{ 'active' if active_page == 'teams' else '' }}">Teams</a>
+                <a href="{{ url_for('tournaments') }}" class="{{ 'active' if active_page == 'tournaments' else '' }}">Tournaments</a>
+                <a href="{{ url_for('plays_for') }}" class="{{ 'active' if active_page == 'plays_for' else '' }}">Plays For</a>
+                <a href="{{ url_for('played_in') }}" class="{{ 'active' if active_page == 'played_in' else '' }}">Played In</a>
             </nav>
         </div>
     </header>

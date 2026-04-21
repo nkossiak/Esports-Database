@@ -12,36 +12,41 @@
         border-radius: 0;
     }
 
-    .subtabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 0 4px;
-    }
+.subtabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 28px;
+    padding: 0 4px;
+    border-bottom: 1px solid #1a1d25;
+    margin-bottom: 14px;
+}
 
-    .subtab-btn {
-        background: #11141c;
-        color: #d9deea;
-        border: 1px solid #252a36;
-        border-radius: 999px;
-        padding: 10px 16px;
-        font-size: 0.92rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: none;
-    }
+.subtab-btn {
+    background: transparent;
+    color: #d9deea;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    box-shadow: none;
+    border-bottom: 3px solid transparent;
+}
 
-    .subtab-btn:hover {
-        background: #171b25;
-        border-color: #3a4153;
-    }
+.subtab-btn:hover {
+    background: transparent;
+    color: #f3ecff;
+    border-color: transparent;
+}
 
-    .subtab-btn.active {
-        background: linear-gradient(90deg, rgba(147, 51, 234, 0.18) 0%, rgba(37, 99, 235, 0.18) 100%);
-        border-color: #5b4ca7;
-        color: #f3ecff;
-    }
+.subtab-btn.active {
+    background: transparent;
+    color: #a855f7;
+    border: none;
+    border-bottom: 3px solid #a855f7;
+}
 
     .tab-pane {
         display: none;
