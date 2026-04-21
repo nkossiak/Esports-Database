@@ -1,26 +1,35 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Tournaments</h2>
+<h2>Esports Tournaments</h2>
+
 <form method="POST">
     <input name="name" placeholder="Tournament Name" required>
-    <input name="country" placeholder="Country">
-    <input name="founded_year" type="number" placeholder="Founded Year">
-    <input name="ranking" type="number" placeholder="Ranking">
-    <input name="prize_pool" type="number" step="0.01" placeholder="Prize Pool">
+    <input name="country" placeholder="Host Country">
+    <input name="founded_year" type="number" placeholder="Year">
+    <input name="prize_pool" placeholder="Prize Pool ($)">
     <button type="submit">Add Tournament</button>
 </form>
 
 <table>
-    <tr><th>ID</th><th>Name</th><th>Country</th><th>Founded Year</th><th>Ranking</th><th>Prize Pool</th></tr>
-    {% for tournament in tournaments %}
-    <tr>
-        <td>{{ tournament.tournament_id }}</td>
-        <td>{{ tournament.name }}</td>
-        <td>{{ tournament.country }}</td>
-        <td>{{ tournament.founded_year or '' }}</td>
-        <td>{{ tournament.ranking or '' }}</td>
-        <td>{{ tournament.prize_pool or '' }}</td>
-    </tr>
-    {% endfor %}
+    <thead>
+        <tr>
+            <th>NodeID</th>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Year</th>
+            <th>Prize Pool</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tournaments %}
+        <tr>
+            <td>{{ t.NodeID }}</td>
+            <td><strong>{{ t.Name }}</strong></td>
+            <td>{{ t.attr.country }}</td>
+            <td>{{ t.attr.year }}</td>
+            <td>{{ t.attr.prize_pool }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

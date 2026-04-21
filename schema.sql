@@ -1,53 +1,21 @@
-DROP TABLE IF EXISTS played_in;
-DROP TABLE IF EXISTS plays_for;
-DROP TABLE IF EXISTS tournaments;
-DROP TABLE IF EXISTS teams;
-DROP TABLE IF EXISTS players;
+DROP TABLE IF EXISTS GraphMemberships;
+DROP TABLE IF EXISTS Graphs;
+DROP TABLE IF EXISTS Edges;
+DROP TABLE IF EXISTS Nodes;
 
-CREATE TABLE players (
-    player_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
-    country TEXT,
-    birth_year INTEGER,
-    first_year INTEGER
+CREATE TABLE Nodes (
+    NodeID INTEGER PRIMARY KEY AUTOINCREMENT,
+    NodeType TEXT NOT NULL, -- 'Player', 'Team', 'Tournament'
+    Name TEXT NOT NULL,
+    Attributes JSON         -- Flexible metadata
 );
 
-CREATE TABLE teams (
-    team_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    game TEXT NOT NULL,
-    location TEXT,
-    founded_year INTEGER,
-    ranking INTEGER
-);
-
-CREATE TABLE tournaments (
-    tournament_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    country TEXT,
-    founded_year INTEGER,
-    ranking INTEGER,
-    prize_pool REAL
-);
-
-CREATE TABLE plays_for (
-    plays_for_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
-    team_id INTEGER NOT NULL,
-    date_joined TEXT,
-    date_left TEXT,
-    UNIQUE(player_id, team_id, date_joined),
-    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
-    FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE CASCADE
-);
-
-CREATE TABLE played_in (
-    played_in_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    team_id INTEGER NOT NULL,
-    tournament_id INTEGER NOT NULL,
-    date_played TEXT,
-    UNIQUE(team_id, tournament_id, date_played),
-    FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE CASCADE,
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(tournament_id) ON DELETE CASCADE
+CREATE TABLE Edges (
+    EdgeID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SourceNodeID INTEGER NOT NULL,
+    TargetNodeID INTEGER NOT NULL,
+    EdgeType TEXT NOT NULL, -- 'Plays_For', 'Played_In', etc.
+    Metadata JSON,
+    FOREIGN KEY (SourceNodeID) REFERENCES Nodes(NodeID),
+    FOREIGN KEY (TargetNodeID) REFERENCES Nodes(NodeID)
 );

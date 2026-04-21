@@ -1,26 +1,179 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>Players</h2>
-<form method="POST">
-    <input name="name" placeholder="Player Name" required>
-    <input name="username" placeholder="Username" required>
-    <input name="country" placeholder="Country">
-    <input name="birth_year" type="number" placeholder="Birth Year">
-    <input name="first_year" type="number" placeholder="First Year">
-    <button type="submit">Add Player</button>
-</form>
 
-<table>
-    <tr><th>ID</th><th>Name</th><th>Username</th><th>Country</th><th>Birth Year</th><th>First Year</th></tr>
-    {% for player in players %}
-    <tr>
-        <td>{{ player.player_id }}</td>
-        <td>{{ player.name }}</td>
-        <td>{{ player.username }}</td>
-        <td>{{ player.country }}</td>
-        <td>{{ player.birth_year or '' }}</td>
-        <td>{{ player.first_year or '' }}</td>
-    </tr>
-    {% endfor %}
-</table>
+{% block content %}
+<style>
+    .player-container {
+        max-width: 1000px;
+        margin: auto;
+    }
+
+    .player-container h1 {
+        margin-bottom: 6px;
+    }
+
+    .player-subtitle {
+        color: #a2aabc;
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 0.92rem;
+    }
+
+    .player-container table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+    }
+
+    .player-container th,
+    .player-container td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid #2a2f3a;
+        vertical-align: middle;
+    }
+
+    .player-container th {
+        background: #1b1730;
+        color: #efe6ff;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        letter-spacing: 0.4px;
+    }
+
+    .player-container tr:hover td {
+        background: #1a1d25;
+    }
+
+    .player-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        line-height: 1.15;
+    }
+
+    .player-handle {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #f5f1ff;
+    }
+
+    .player-name {
+        font-size: 0.8rem;
+        color: #9fa8bb;
+        font-weight: 500;
+    }
+
+    .country-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.84rem;
+        color: #dfe5f1;
+    }
+
+    .flag {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .muted-dash {
+        color: #7f8799;
+    }
+
+    .birthday-text {
+        font-size: 0.84rem;
+        color: #d9deea;
+    }
+</style>
+
+<div class="player-container">
+    <h1>Pro Player Database</h1>
+    <p class="player-subtitle">Dynamic inventory pulled from <code>esports.db</code></p>
+
+    {% set flags = {
+        'Canada': '🇨🇦',
+        'Brazil': '🇧🇷',
+        'South Korea': '🇰🇷',
+        'Korea': '🇰🇷',
+        'United States': '🇺🇸',
+        'USA': '🇺🇸',
+        'France': '🇫🇷',
+        'Denmark': '🇩🇰',
+        'Finland': '🇫🇮',
+        'Ukraine': '🇺🇦',
+        'Russia': '🇷🇺',
+        'Sweden': '🇸🇪',
+        'Norway': '🇳🇴',
+        'Germany': '🇩🇪',
+        'Poland': '🇵🇱',
+        'Australia': '🇦🇺',
+        'United Kingdom': '🇬🇧',
+        'UK': '🇬🇧',
+        'China': '🇨🇳',
+        'Japan': '🇯🇵',
+        'Indonesia': '🇮🇩',
+        'Philippines': '🇵🇭',
+        'Thailand': '🇹🇭',
+        'Turkey': '🇹🇷',
+        'Argentina': '🇦🇷',
+        'Chile': '🇨🇱',
+        'Mexico': '🇲🇽',
+        'Spain': '🇪🇸',
+        'Netherlands': '🇳🇱',
+        'Romania': '🇷🇴',
+        'Czech Republic': '🇨🇿',
+        'Serbia': '🇷🇸',
+        'Bosnia and Herzegovina': '🇧🇦',
+        'Belarus': '🇧🇾',
+        'Kazakhstan': '🇰🇿',
+        'Malaysia': '🇲🇾',
+        'Singapore': '🇸🇬',
+        'India': '🇮🇳',
+        'Pakistan': '🇵🇰',
+        'Peru': '🇵🇪'
+    } %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Country</th>
+                <th>Birthday</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            {% set full_name = player.attr.full_name if player.attr.full_name and player.attr.full_name != "Unknown" else None %}
+            {% set country = player.attr.country if player.attr.country and player.attr.country != "Unknown" else None %}
+            {% set birthday = player.attr.birthday if player.attr.birthday and player.attr.birthday != "Unknown" else None %}
+
+            <tr>
+                <td>
+                    <div class="player-main">
+                        <span class="player-handle">{{ player.Name }}</span>
+                        <span class="player-name">
+                            {{ full_name if full_name else '---' }}
+                        </span>
+                    </div>
+                </td>
+
+                <td>
+                    {% if country %}
+                        <span class="country-cell">
+                            <span class="flag">{{ flags.get(country, '🏳️') }}</span>
+                            <span>{{ country }}</span>
+                        </span>
+                    {% else %}
+                        <span class="muted-dash">---</span>
+                    {% endif %}
+                </td>
+
+                <td class="birthday-text">
+                    {{ birthday if birthday else '---' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

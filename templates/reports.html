@@ -1,60 +1,271 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Reports</h2>
+<style>
+    .graph-panel {
+        display: grid;
+        gap: 18px;
+    }
+    .graph-toolbar {
+        background: linear-gradient(180deg, #f7f4ff 0%, #f0ecfb 100%);
+        border: 1px solid #e1d9f4;
+        border-radius: 14px;
+        padding: 18px;
+    }
+    .graph-toolbar form {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+        margin: 0;
+    }
+    .graph-toolbar label {
+        font-weight: 600;
+        color: #2f254f;
+        display: block;
+        margin-bottom: 8px;
+    }
+    .graph-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+    }
+    .meta-card {
+        background: #faf8ff;
+        border: 1px solid #e7def8;
+        border-radius: 12px;
+        padding: 14px;
+    }
+    .meta-card strong {
+        display: block;
+        color: #2f254f;
+        margin-bottom: 6px;
+    }
+    #cy-wrap {
+        background: linear-gradient(180deg, #fbfaff 0%, #f4f0fc 100%);
+        border: 1px solid #ddd4ef;
+        border-radius: 18px;
+        padding: 14px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    #cy {
+        width: 100%;
+        height: 620px;
+        background:
+            radial-gradient(circle at 1px 1px, rgba(111, 92, 170, 0.10) 1px, transparent 0);
+        background-size: 26px 26px;
+        border-radius: 14px;
+        border: 1px solid #e0d9f1;
+    }
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+    }
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        color: #554f67;
+        background: white;
+        border: 1px solid #e5def5;
+        border-radius: 999px;
+        padding: 8px 12px;
+    }
+    .legend-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .legend-swatch.player {
+        background: #33285b;
+    }
+    .legend-swatch.team {
+        background: #8b5cf6;
+        border-radius: 4px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        background: linear-gradient(180deg, #faf8ff 0%, #f3effc 100%);
+        border: 1px dashed #d8cdec;
+        border-radius: 16px;
+        color: #615b73;
+    }
+    .graph-title {
+        margin-bottom: 6px;
+    }
+</style>
 
+<div class="graph-panel">
+    <div>
+        <h2 class="graph-title">Player Network Visualization</h2>
+        <p>Visualize a selected player and their connected team network while keeping the original project styling.</p>
+    </div>
 
-<h3>Players Per Team</h3>
-<table>
-    <tr><th>Team</th><th>Player Count</th></tr>
-    {% for row in players_per_team %}
-    <tr><td>{{ row.team_name }}</td><td>{{ row.player_count }}</td></tr>
-    {% endfor %}
-</table>
+    <div class="graph-toolbar">
+        <form method="POST">
+            <div>
+                <label for="player_name">Select a Player</label>
+                <select name="player_name" id="player_name">
+                    {% for p in players %}
+                        <option value="{{ p.Name }}" {% if p.Name == selected_player %}selected{% endif %}>{{ p.Name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Visualize Network</button>
+        </form>
+    </div>
 
-<h3>Tournaments Per Team</h3>
-<table>
-    <tr><th>Team</th><th>Tournament Count</th></tr>
-    {% for row in tournaments_per_team %}
-    <tr><td>{{ row.team_name }}</td><td>{{ row.tournament_count }}</td></tr>
-    {% endfor %}
-</table>
+    {% if selected_player %}
+        <div class="graph-meta">
+            <div class="meta-card">
+                <strong>Focused Player</strong>
+                {{ selected_player }}
+            </div>
+            <div class="meta-card">
+                <strong>Included Connections</strong>
+                Selected player, linked teams, and teammates.
+            </div>
+            <div class="meta-card">
+                <strong>Layout</strong>
+                Concentric layout for a cleaner presentation graph.
+            </div>
+        </div>
 
-<h3>High Prize Pool Tournaments</h3>
-<table>
-    <tr><th>Name</th><th>Country</th><th>Prize Pool</th></tr>
-    {% for row in high_prize_tournaments %}
-    <tr><td>{{ row.name }}</td><td>{{ row.country }}</td><td>{{ row.prize_pool }}</td></tr>
-    {% endfor %}
-</table>
+        <div id="cy-wrap">
+            <div id="cy"></div>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-swatch player"></span> Player node</div>
+                <div class="legend-item"><span class="legend-swatch team"></span> Team node</div>
+                <div class="legend-item">Edges represent <strong>Plays_For</strong> relationships</div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            Choose a player above to generate the Cytoscape network view.
+        </div>
+    {% endif %}
+</div>
 
-<h2>Find Teammates</h2>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<script>
+    {% if selected_player %}
+    fetch('/api/graph-data/' + encodeURIComponent({{ selected_player|tojson }}))
+        .then(res => res.json())
+        .then(data => {
+            var elements = data.elements || [];
 
-<form method="POST">
-    <select name="player_name">
-        {% for p in players %}
-            <option value="{{ p[0] }}">{{ p[0] }}</option>
-        {% endfor %}
-    </select>
-    <button type="submit">Search</button>
-</form>
+            var cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: elements,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(label)',
+                            'background-color': '#33285b',
+                            'color': '#ffffff',
+                            'font-size': 12,
+                            'font-weight': '700',
+                            'text-wrap': 'wrap',
+                            'text-max-width': 110,
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'text-outline-width': 3,
+                            'text-outline-color': '#33285b',
+                            'width': 58,
+                            'height': 58,
+                            'border-width': 3,
+                            'border-color': '#ffffff',
+                            'overlay-padding': 6,
+                            'shadow-blur': 18,
+                            'shadow-color': 'rgba(51, 40, 91, 0.22)',
+                            'shadow-offset-y': 6,
+                            'shadow-opacity': 1
+                        }
+                    },
+                    {
+                        selector: 'node[type="team"]',
+                        style: {
+                            'shape': 'round-rectangle',
+                            'background-color': '#8b5cf6',
+                            'text-outline-color': '#8b5cf6',
+                            'width': 76,
+                            'height': 46,
+                            'padding': '10px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'curve-style': 'bezier',
+                            'width': 4,
+                            'line-color': '#b7a7e8',
+                            'target-arrow-color': '#b7a7e8',
+                            'target-arrow-shape': 'triangle',
+                            'arrow-scale': 1.1,
+                            'opacity': 0.95,
+                            'label': 'data(label)',
+                            'font-size': 10,
+                            'font-weight': '600',
+                            'color': '#6a6480',
+                            'text-background-color': '#ffffff',
+                            'text-background-opacity': 0.9,
+                            'text-background-padding': 3,
+                            'text-rotation': 'autorotate'
+                        }
+                    },
+                    {
+                        selector: ':selected',
+                        style: {
+                            'border-width': 4,
+                            'border-color': '#f59e0b',
+                            'line-color': '#f59e0b',
+                            'target-arrow-color': '#f59e0b'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'concentric',
+                    fit: true,
+                    padding: 40,
+                    animate: true,
+                    animationDuration: 700,
+                    spacingFactor: 1.15,
+                    concentric: function(node) {
+                        return node.data('type') === 'team' ? 2 : 1;
+                    },
+                    levelWidth: function() { return 1; }
+                }
+            });
 
-{% if teammates %}
-<h3>Teammates of {{ selected_player }}</h3>
+            cy.on('tap', 'node', function(evt) {
+                var node = evt.target;
+                cy.elements().removeClass('faded');
+                var neighborhood = node.closedNeighborhood();
+                cy.elements().difference(neighborhood).addClass('faded');
+            });
 
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Username</th>
-        <th>Team</th>
-    </tr>
+            cy.on('tap', function(evt) {
+                if (evt.target === cy) {
+                    cy.elements().removeClass('faded');
+                }
+            });
 
-    {% for t in teammates %}
-    <tr>
-        <td>{{ t[0] }}</td>
-        <td>{{ t[1] }}</td>
-        <td>{{ t[2] }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% endif %}
+            cy.style()
+                .selector('.faded')
+                .style({
+                    'opacity': 0.18,
+                    'text-opacity': 0.25
+                })
+                .update();
+        })
+        .catch(() => {
+            document.getElementById('cy-wrap').innerHTML = '<div class="empty-state">The graph data could not be loaded.</div>';
+        });
+    {% endif %}
+</script>
 {% endblock %}
