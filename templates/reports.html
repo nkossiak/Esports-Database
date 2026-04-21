@@ -341,7 +341,7 @@
             <div class="toolbar">
                 <form onsubmit="return false;" id="query2-form">
                     <div>
-                        <label for="query2-threshold">Minimum Tournaments (n)</label>
+                        <label for="query2-threshold">Esports Index Threshold (h)</label>
                         <input type="number" id="query2-threshold" min="1" value="2">
                     </div>
 
@@ -362,8 +362,9 @@
                     <div id="query2-cy"></div>
                     <div class="legend">
                         <div class="legend-item"><span class="legend-swatch team"></span> Qualifying Team</div>
-                        <div class="legend-item"><span class="legend-swatch tournament"></span> Tournament</div>
-                        <div class="legend-item">Mode: Played_In or Won_By</div>
+                        <div class="legend-item"><span class="legend-swatch tournament"></span> Qualifying Tournament</div>
+                        <div class="legend-item">Rule: at least h tournaments, each with at least h participants</div>
+                        <div class="legend-item">Mode: participation or wins</div>
                     </div>
                 </div>
 
@@ -374,7 +375,7 @@
             </div>
 
             <div id="query2-empty" class="empty-state" style="display:none;">
-                No teams matched the selected threshold.
+                No teams matched the selected esports index threshold.
             </div>
         </div>
     </section>
@@ -398,7 +399,7 @@
                         <div class="legend-item"><span class="legend-swatch tournament"></span> Q1 Tournament</div>
                         <div class="legend-item"><span class="legend-swatch team"></span> Team</div>
                         <div class="legend-item">Q1: Prize Pool &gt; 1M</div>
-                        <div class="legend-item">Network: Played_In (fallback: Won_By)</div>
+                        <div class="legend-item">Network: Tournament → Team</div>
                     </div>
                 </div>
 
@@ -510,12 +511,12 @@
                     'label': 'data(label)',
                     'color': '#e8eefb',
                     'font-size': 8,
-                    'font-weight': '400',
+                    'font-weight': '300',
                     'text-wrap': 'ellipsis',
                     'text-max-width': 70,
                     'text-valign': 'bottom',
                     'text-halign': 'center',
-                    'text-margin-y': 10,
+                    'text-margin-y': 6,
                     'text-outline-width': 0,
                     'border-width': 0
                 }
