@@ -216,14 +216,39 @@
         margin-top: 8px;
     }
 
-    .query-report-card {
+    .query-layout-three-col {
         display: grid;
+        grid-template-columns: 340px minmax(0, 1fr) 280px;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .report-panel {
+        background: rgba(10, 12, 18, 0.88);
+        border: none;
+        border-radius: 8px;
+        box-shadow: none;
+        padding: 14px;
+        min-height: 700px;
+        position: sticky;
+        top: 92px;
+        display: grid;
+        align-content: start;
         gap: 14px;
     }
 
-    .query-report-text {
+    .report-copy {
         display: grid;
         gap: 6px;
+        align-content: start;
+    }
+
+    .report-title {
+        margin: 0;
+        color: #f5f1ff;
+        font-size: 1.02rem;
+        font-weight: 700;
+        line-height: 1.15;
     }
 
     .query-report-desc {
@@ -233,10 +258,54 @@
         line-height: 1.4;
     }
 
+    .report-controls {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+    }
+
+    .report-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-items: end;
+    }
+
+    .report-controls-grid.one-field {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .report-controls-grid.button-only {
+        grid-template-columns: 1fr;
+    }
+
+    .report-panel label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #ece4ff;
+        font-size: 0.84rem;
+        letter-spacing: 0.2px;
+    }
+
+    .report-panel .control-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .report-panel .control-hint {
+        margin: 0;
+        color: #8f98ab;
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+
     .query-report-table-wrap {
         background: #0d1017;
         border-radius: 6px;
         overflow: hidden;
+        align-self: start;
     }
 
     .query-report-table {
@@ -272,73 +341,6 @@
         padding: 14px 12px;
     }
 
-    .report-toolbar {
-        display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
-        gap: 18px;
-        align-items: start;
-    }
-
-    .report-copy {
-        display: grid;
-        gap: 4px;
-        align-content: start;
-    }
-
-    .report-title {
-        margin: 0;
-        color: #f5f1ff;
-        font-size: 0.98rem;
-        font-weight: 700;
-        line-height: 1.15;
-    }
-
-    .report-subtitle {
-        margin: 0;
-        color: #a2aabc;
-        font-size: 0.92rem;
-        line-height: 1.4;
-    }
-
-    .report-controls {
-        display: grid;
-        gap: 12px;
-        align-content: start;
-    }
-
-    .report-controls-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(160px, 1fr)) auto;
-        gap: 12px;
-        align-items: end;
-    }
-
-    .report-controls-grid.one-field {
-        grid-template-columns: minmax(230px, 1fr) auto;
-    }
-
-    .report-controls-grid.button-only {
-        grid-template-columns: auto;
-        justify-content: end;
-    }
-
-    .toolbar label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 700;
-        color: #ece4ff;
-        font-size: 0.84rem;
-        letter-spacing: 0.2px;
-    }
-
-    .toolbar .control-hint {
-        margin: 0;
-        color: #8f98ab;
-        font-size: 0.8rem;
-        line-height: 1.35;
-        text-align: right;
-    }
-
     .empty-state {
         text-align: center;
         padding: 40px 24px;
@@ -357,11 +359,12 @@
     @media (max-width: 1200px) {
         .overview-layout,
         .query-layout-two-col,
-        .report-toolbar {
+        .query-layout-three-col {
             grid-template-columns: 1fr;
         }
 
-        .info-panel {
+        .info-panel,
+        .report-panel {
             min-height: auto;
             position: static;
         }
@@ -373,10 +376,6 @@
         .report-controls-grid.button-only {
             grid-template-columns: 1fr;
             justify-content: stretch;
-        }
-
-        .toolbar .control-hint {
-            text-align: left;
         }
     }
 </style>
@@ -421,9 +420,9 @@
     <!-- QUERY 1 -->
     <section id="query1-tab" class="tab-pane">
         <div class="query-layout">
-            <div class="toolbar query1-toolbar">
-                <div class="query-report-card">
-                    <div class="query-report-text">
+            <div class="query-layout-three-col">
+                <aside class="report-panel" id="query1-report-panel">
+                    <div class="report-copy">
                         <h3 class="report-title">Roster Relationship Report</h3>
                         <p class="query-report-desc">Shows each player and the team they are connected to through the <strong>Plays_For</strong> relationship.</p>
                     </div>
@@ -436,6 +435,9 @@
                                     <option value="">Show All Players + Teams</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="control-actions">
                             <button type="button" id="query1-reset-btn">Reset View</button>
                         </div>
                     </div>
@@ -452,10 +454,8 @@
                         </table>
                         <div id="query1-report-empty" class="query-report-empty" style="display:none;">No roster rows match the selected filter.</div>
                     </div>
-                </div>
-            </div>
+                </aside>
 
-            <div class="query-layout-two-col">
                 <div class="query-frame">
                     <div id="subgraph-cy"></div>
                     <div class="legend">
@@ -478,9 +478,9 @@
     <!-- QUERY 2 -->
     <section id="query2-tab" class="tab-pane">
         <div class="query-layout">
-            <div class="toolbar">
-                <div class="query-report-card">
-                    <div class="query-report-text">
+            <div class="query-layout-three-col">
+                <aside class="report-panel" id="query2-report-panel">
+                    <div class="report-copy">
                         <h3 class="report-title">Esports Index Qualification Report</h3>
                         <p class="query-report-desc">Shows the teams that satisfy the selected esports index threshold <strong>h</strong> under the chosen mode.</p>
                     </div>
@@ -499,7 +499,9 @@
                                     <option value="winner">Winner</option>
                                 </select>
                             </div>
+                        </div>
 
+                        <div class="control-actions">
                             <button type="button" id="query2-run-btn">Run Query 2</button>
                         </div>
                     </div>
@@ -518,10 +520,8 @@
                         </table>
                         <div id="query2-report-empty" class="query-report-empty" style="display:none;">No teams matched the selected threshold.</div>
                     </div>
-                </div>
-            </div>
+                </aside>
 
-            <div class="query-layout-two-col">
                 <div class="query-frame">
                     <div id="query2-cy"></div>
                     <div class="legend">
@@ -549,15 +549,16 @@
     <!-- QUERY 3 -->
     <section id="query3-tab" class="tab-pane">
         <div class="query-layout">
-            <div class="toolbar query3-toolbar">
-                <div class="query-report-card">
-                    <div class="query-report-text">
+            <div class="query-layout-three-col">
+                <aside class="report-panel" id="query3-report-panel">
+                    <div class="report-copy">
                         <h3 class="report-title">Q1 Tournament Network Report</h3>
                         <p class="query-report-desc">Shows Q1 tournaments, defined here as tournaments with prize pools above <strong>$1M</strong>, and the teams linked to each one.</p>
                     </div>
 
                     <div class="report-controls">
-                        <div class="report-controls-grid button-only">
+                        <div class="report-controls-grid button-only"></div>
+                        <div class="control-actions">
                             <button type="button" id="query3-run-btn">Run Query 3</button>
                         </div>
                     </div>
@@ -575,10 +576,8 @@
                         </table>
                         <div id="query3-report-empty" class="query-report-empty" style="display:none;">No Q1 tournaments were found.</div>
                     </div>
-                </div>
-            </div>
+                </aside>
 
-            <div class="query-layout-two-col">
                 <div class="query-frame">
                     <div id="query3-cy"></div>
                     <div class="legend">
