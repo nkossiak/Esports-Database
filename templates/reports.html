@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600&display=swap');
 
     main {
         max-width: min(1580px, calc(100vw - 48px));
@@ -65,7 +65,8 @@
         display: block;
     }
 
-    .overview-layout {
+    .overview-layout,
+    .query-layout-two-col {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 280px;
         gap: 14px;
@@ -93,33 +94,33 @@
         padding: 14px;
     }
 
-    #overview-cy {
-        width: 100%;
-        height: 820px;
-        border-radius: 6px;
-        border: none;
-        background:
-            radial-gradient(circle at 18% 16%, rgba(147, 51, 234, 0.07), transparent 28%),
-            radial-gradient(circle at 82% 20%, rgba(37, 99, 235, 0.07), transparent 30%),
-            radial-gradient(circle at 48% 78%, rgba(6, 182, 212, 0.06), transparent 26%),
-            #05060a;
-    }
-
-    #subgraph-cy {
+    #overview-cy,
+    #subgraph-cy,
+    #query2-cy,
+    #query3-cy {
         width: 100%;
         height: 700px;
         border-radius: 6px;
         border: none;
         background:
-            radial-gradient(circle at 22% 20%, rgba(147, 51, 234, 0.06), transparent 26%),
-            radial-gradient(circle at 78% 28%, rgba(37, 99, 235, 0.06), transparent 26%),
+            radial-gradient(circle at 20% 18%, rgba(147, 51, 234, 0.06), transparent 26%),
+            radial-gradient(circle at 82% 24%, rgba(37, 99, 235, 0.06), transparent 26%),
+            radial-gradient(circle at 48% 78%, rgba(6, 182, 212, 0.05), transparent 24%),
             #05060a;
     }
 
+    #overview-cy {
+        height: 820px;
+    }
+
     .info-panel {
-        min-height: 820px;
+        min-height: 700px;
         position: sticky;
         top: 92px;
+    }
+
+    #overview-info-panel {
+        min-height: 820px;
     }
 
     .info-panel h4 {
@@ -219,10 +220,14 @@
 
     .toolbar form {
         display: grid;
-        grid-template-columns: minmax(230px, 1fr) auto;
+        grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
         gap: 12px;
         align-items: end;
         margin: 0;
+    }
+
+    .toolbar.query1-toolbar form {
+        grid-template-columns: minmax(230px, 1fr) auto;
     }
 
     .toolbar label {
@@ -241,11 +246,6 @@
         color: #8f98ab;
     }
 
-    .coming-soon h3 {
-        margin-top: 0;
-        margin-bottom: 10px;
-    }
-
     .small-note {
         color: #9aa2b3;
         font-size: 0.88rem;
@@ -253,7 +253,8 @@
     }
 
     @media (max-width: 1200px) {
-        .overview-layout {
+        .overview-layout,
+        .query-layout-two-col {
             grid-template-columns: 1fr;
         }
 
@@ -276,6 +277,7 @@
         <button class="subtab-btn" data-tab="query3-tab">Query 3</button>
     </div>
 
+    <!-- OVERVIEW -->
     <section id="overview-tab" class="tab-pane active">
         <div class="overview-layout">
             <div class="graph-stage">
@@ -290,32 +292,29 @@
                 </div>
             </div>
 
-            <aside class="info-panel" id="info-panel">
+            <aside class="info-panel" id="overview-info-panel">
                 <h4>Node Details</h4>
-                <div class="empty-state">
-                    No node selected yet.
-                </div>
+                <div class="empty-state">No node selected yet.</div>
             </aside>
         </div>
     </section>
 
+    <!-- QUERY 1 -->
     <section id="query1-tab" class="tab-pane">
         <div class="query-layout">
-            <div class="toolbar">
-                <form method="POST">
+            <div class="toolbar query1-toolbar">
+                <form onsubmit="return false;">
                     <div>
-                        <label for="player_name">Select a Player</label>
-                        <select name="player_name" id="player_name">
-                            {% for p in players %}
-                                <option value="{{ p.Name }}" {% if p.Name == selected_player %}selected{% endif %}>{{ p.Name }}</option>
-                            {% endfor %}
+                        <label for="query1-player-filter">Filter by Player</label>
+                        <select id="query1-player-filter">
+                            <option value="">Show All Players + Teams</option>
                         </select>
                     </div>
-                    <button type="submit">Visualize Network</button>
+                    <button type="button" id="query1-reset-btn">Reset View</button>
                 </form>
             </div>
 
-            {% if selected_player %}
+            <div class="query-layout-two-col">
                 <div class="query-frame">
                     <div id="subgraph-cy"></div>
                     <div class="legend">
@@ -324,27 +323,102 @@
                         <div class="legend-item">Edges represent <strong>Plays_For</strong></div>
                     </div>
                 </div>
-            {% else %}
-                <div class="empty-state">
-                    Choose a player above to generate the focused player subgraph.
-                </div>
-            {% endif %}
+
+                <aside class="info-panel" id="query1-info-panel">
+                    <h4>Node Details</h4>
+                    <div class="empty-state">No node selected yet.</div>
+                </aside>
+            </div>
         </div>
     </section>
 
+    <!-- QUERY 2 -->
     <section id="query2-tab" class="tab-pane">
-        <div class="coming-soon">
-            <h3>Query 2: Tournament Threshold Network</h3>
-            <p class="small-note">Threshold input + Participant/Winner toggle goes here.</p>
+        <div class="query-layout">
+            <div class="toolbar">
+                <form onsubmit="return false;" id="query2-form">
+                    <div>
+                        <label for="query2-threshold">Minimum Tournaments (n)</label>
+                        <input type="number" id="query2-threshold" min="1" value="2">
+                    </div>
+
+                    <div>
+                        <label for="query2-mode">Mode</label>
+                        <select id="query2-mode">
+                            <option value="participant">Participant</option>
+                            <option value="winner">Winner</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="query2-run-btn">Visualize Query 2</button>
+                </form>
+            </div>
+
+            <div class="query-layout-two-col">
+                <div class="query-frame">
+                    <div id="query2-cy"></div>
+                    <div class="legend">
+                        <div class="legend-item"><span class="legend-swatch team"></span> Qualifying Team</div>
+                        <div class="legend-item"><span class="legend-swatch tournament"></span> Tournament</div>
+                        <div class="legend-item">Mode determines whether edges represent <strong>Played_In</strong> or <strong>Won_By</strong></div>
+                    </div>
+                </div>
+
+                <aside class="info-panel" id="query2-info-panel">
+                    <h4>Node Details</h4>
+                    <div class="empty-state">No node selected yet.</div>
+                </aside>
+            </div>
+
+            <div id="query2-empty" class="empty-state" style="display:none;">
+                No teams matched the selected threshold.
+            </div>
         </div>
     </section>
 
-    <section id="query3-tab" class="tab-pane">
-        <div class="coming-soon">
-            <h3>Query 3: Q1 Tournament Network</h3>
-            <p class="small-note">Q1 tournaments with prize pool > 1M go here.</p>
+    <!-- QUERY 3 -->
+<section id="query3-tab" class="tab-pane">
+    <div class="query-layout">
+        <div class="toolbar">
+            <form onsubmit="return false;">
+                <div>
+                    <label for="query3-run-btn">Run Query</label>
+                    <button type="button" id="query3-run-btn">Visualize Query 3</button>
+                </div>
+            </form>
         </div>
-    </section>
+
+        <div class="query-layout-two-col">
+            <div class="query-frame">
+                <div id="query3-cy"></div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="legend-swatch tournament"></span> Q1 Tournament
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch team"></span> Team
+                    </div>
+                    <div class="legend-item">
+                        Q1: Prize Pool &gt; 1M
+                    </div>
+                    <div class="legend-item">
+                        Network: Tournament → Team
+                    </div>
+                </div>
+            </div>
+
+            <aside class="info-panel" id="query3-info-panel">
+                <h4>Node Details</h4>
+                <div class="empty-state">No node selected yet.</div>
+            </aside>
+        </div>
+
+        <div id="query3-empty" class="empty-state" style="display:none;">
+            No Q1 tournaments were found.
+        </div>
+    </div>
+</section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
@@ -364,8 +438,8 @@
         });
     });
 
-    function buildInfoPanel(data) {
-        const panel = document.getElementById('info-panel');
+    function buildInfoPanel(data, panelId) {
+        const panel = document.getElementById(panelId);
 
         if (!data) {
             panel.innerHTML = `
@@ -410,12 +484,143 @@
         `;
     }
 
+    function attachNodeInfo(cyInstance, panelId) {
+        cyInstance.on('tap', 'node', function(evt) {
+            const node = evt.target;
+            const neighborhood = node.closedNeighborhood();
+
+            cyInstance.elements().removeClass('faded highlighted');
+            cyInstance.elements().difference(neighborhood).addClass('faded');
+            neighborhood.addClass('highlighted');
+
+            fetch('/api/node-details/' + node.id())
+                .then(res => res.json())
+                .then(detailData => buildInfoPanel(detailData, panelId))
+                .catch(() => buildInfoPanel(null, panelId));
+        });
+
+        cyInstance.on('tap', function(evt) {
+            if (evt.target === cyInstance) {
+                cyInstance.elements().removeClass('faded highlighted');
+                buildInfoPanel(null, panelId);
+            }
+        });
+    }
+
+function getSharedQueryStyles() {
+    return [
+        {
+            selector: 'node',
+            style: {
+                'font-family': 'Exo 2, sans-serif',
+                'label': 'data(label)',
+                'color': '#e8eefb',
+                'font-size': 5,
+                'font-weight': '300',   // NOT bold
+                'text-wrap': 'wrap',
+                'text-max-width': 60,
+                'text-valign': 'bottom',
+                'text-halign': 'center',
+                'text-margin-y': 7,
+                'line-height': 1,
+                'text-outline-width': 0,
+                'border-width': 0
+            }
+        },
+        {
+            selector: 'node[type="player"]',
+            style: {
+                'shape': 'ellipse',
+                'background-color': '#7c3aed',
+                'width': 15,
+                'height': 15,
+                'shadow-blur': 10,
+                'shadow-color': '#7c3aed',
+                'shadow-opacity': 0.38
+            }
+        },
+        {
+            selector: 'node[type="team"]',
+            style: {
+                'shape': 'round-rectangle',
+                'background-color': '#2563eb',
+                'width': 16,      // ← keep small
+                'height': 16,
+                'shadow-blur': 10,
+                'shadow-color': '#2563eb',
+                'shadow-opacity': 0.36
+            }
+        },
+        {
+            selector: 'node[type="tournament"]',
+            style: {
+                'shape': 'diamond',
+                'background-color': '#06b6d4',
+                'width': 16,
+                'height': 16,
+                'shadow-blur': 10,
+                'shadow-color': '#06b6d4',
+                'shadow-opacity': 0.36
+            }
+        },
+        {
+            selector: 'edge',
+            style: {
+                'label': '',
+                'curve-style': 'haystack',
+                'width': 1.6,
+                'line-fill': 'linear-gradient',
+                'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
+                'line-gradient-stop-positions': '0 55 100',
+                'opacity': 0.50,
+                'target-arrow-shape': 'none'
+            }
+        },
+        {
+            selector: '.faded',
+            style: {
+                'opacity': 0.06,
+                'text-opacity': 0.05
+            }
+        },
+        {
+            selector: '.highlighted',
+            style: {
+                'opacity': 1,
+                'width': 2.1,
+                'line-fill': 'linear-gradient',
+                'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
+            }
+        }
+    ];
+}
+
+    function getSharedQueryLayout() {
+        return {
+            name: 'cose',
+            animate: false,
+            fit: true,
+            padding: 28,
+            nodeRepulsion: 140000,
+            idealEdgeLength: 52,
+            edgeElasticity: 80,
+            gravity: 0.10,
+            componentSpacing: 120,
+            nodeOverlap: 120,
+            nestingFactor: 0.9,
+            numIter: 1800,
+            initialTemp: 160,
+            coolingFactor: 0.95,
+            minTemp: 1.0
+        };
+    }
+
+    // OVERVIEW GRAPH
     fetch('/api/graph-data/all')
         .then(res => res.json())
         .then(data => {
             const rawElements = data.elements || [];
 
-            // remove isolated nodes from overview
             const edgeElements = rawElements.filter(el => el.data && el.data.source && el.data.target);
             const connectedIds = new Set();
             edgeElements.forEach(el => {
@@ -431,171 +636,27 @@
             const overviewCy = cytoscape({
                 container: document.getElementById('overview-cy'),
                 elements: elements,
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'label': '',
-                        'font-family': 'Inter, system-ui, sans-serif',
-                        'text-opacity': 0,
-                        'overlay-padding': 4,
-                        'opacity': 0.96
-                    }
-                },
-                {
-                    selector: 'node[type="player"]',
-                    style: {
-                        'shape': 'ellipse',
-                        'background-color': '#7c3aed',
-                        'width': 13,
-                        'height': 13,
-                        'border-width': 0,
-                        'shadow-blur': 10,
-                        'shadow-color': '#7c3aed',
-                        'shadow-opacity': 0.38
-                    }
-                },
-                {
-                    selector: 'node[type="team"]',
-                    style: {
-                        'shape': 'round-rectangle',
-                        'background-color': '#2563eb',
-                        'width': 16,
-                        'height': 16,
-                        'border-width': 0,
-                        'shadow-blur': 10,
-                        'shadow-color': '#2563eb',
-                        'shadow-opacity': 0.36
-                    }
-                },
-                {
-                    selector: 'node[type="tournament"]',
-                    style: {
-                        'shape': 'diamond',
-                        'background-color': '#06b6d4',
-                        'width': 15,
-                        'height': 15,
-                        'border-width': 0,
-                        'shadow-blur': 10,
-                        'shadow-color': '#06b6d4',
-                        'shadow-opacity': 0.36
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'curve-style': 'haystack',
-                        'width': 1.1,
-                        'line-fill': 'linear-gradient',
-                        'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
-                        'line-gradient-stop-positions': '0 55 100',
-                        'opacity': 0.67,
-                        'target-arrow-shape': 'none'
-                    }
-                },
-                {
-                    selector: ':selected',
-                    style: {
-                        'border-width': 0,
-                        'opacity': 1
-                    }
-                },
-                {
-                    selector: '.faded',
-                    style: {
-                        'opacity': 0.05
-                    }
-                },
-                {
-                    selector: '.highlighted',
-                    style: {
-                        'opacity': 1,
-                        'width': 2.2,
-                        'line-fill': 'linear-gradient',
-                        'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
-                    }
-                }
-            ],
-            layout: {
-                name: 'cose',
-                animate: false,
-                fit: true,
-                padding: 28,
-                nodeRepulsion: 220000,
-                idealEdgeLength: 58,
-                edgeElasticity: 80,
-                gravity: 0.12,
-                componentSpacing: 140,
-                nodeOverlap: 180,
-                nestingFactor: 0.9,
-                numIter: 2200,
-                initialTemp: 180,
-                coolingFactor: 0.96,
-                minTemp: 1.0
-            }});
-
-            overviewCy.on('tap', 'node', function(evt) {
-                const node = evt.target;
-                const neighborhood = node.closedNeighborhood();
-
-                overviewCy.elements().removeClass('faded highlighted');
-                overviewCy.elements().difference(neighborhood).addClass('faded');
-                neighborhood.addClass('highlighted');
-
-                fetch('/api/node-details/' + node.id())
-                    .then(res => res.json())
-                    .then(detailData => buildInfoPanel(detailData))
-                    .catch(() => buildInfoPanel(null));
-            });
-
-            overviewCy.on('tap', function(evt) {
-                if (evt.target === overviewCy) {
-                    overviewCy.elements().removeClass('faded highlighted');
-                    buildInfoPanel(null);
-                }
-            });
-        })
-        .catch(() => {
-            document.getElementById('overview-tab').innerHTML =
-                '<div class="empty-state">The overview graph could not be loaded.</div>';
-        });
-
-    {% if selected_player %}
-    fetch('/api/graph-data/' + encodeURIComponent({{ selected_player|tojson }}))
-        .then(res => res.json())
-        .then(data => {
-            const elements = data.elements || [];
-
-            cytoscape({
-                container: document.getElementById('subgraph-cy'),
-                elements: elements,
                 style: [
                     {
                         selector: 'node',
                         style: {
-                            'font-family': 'Inter, system-ui, sans-serif',
-                            'label': 'data(label)',
-                            'color': '#ffffff',
-                            'font-size': 10,
-                            'font-weight': '500',
-                            'text-wrap': 'wrap',
-                            'text-max-width': 86,
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'text-outline-width': 0,
-                            'width': 48,
-                            'height': 48,
-                            'border-width': 0
+                            'label': '',
+                            'text-opacity': 0,
+                            'overlay-padding': 4,
+                            'opacity': 0.96
                         }
                     },
                     {
                         selector: 'node[type="player"]',
                         style: {
                             'shape': 'ellipse',
-                            'background-color': '#8b5cf6',
-                            'shadow-blur': 14,
+                            'background-color': '#7c3aed',
+                            'width': 13,
+                            'height': 13,
+                            'border-width': 0,
+                            'shadow-blur': 10,
                             'shadow-color': '#7c3aed',
-                            'shadow-opacity': 0.36
+                            'shadow-opacity': 0.38
                         }
                     },
                     {
@@ -603,51 +664,277 @@
                         style: {
                             'shape': 'round-rectangle',
                             'background-color': '#2563eb',
-                            'width': 70,
-                            'height': 34,
-                            'padding': '4px'
+                            'width': 16,
+                            'height': 16,
+                            'border-width': 0,
+                            'shadow-blur': 10,
+                            'shadow-color': '#2563eb',
+                            'shadow-opacity': 0.36
+                        }
+                    },
+                    {
+                        selector: 'node[type="tournament"]',
+                        style: {
+                            'shape': 'diamond',
+                            'background-color': '#06b6d4',
+                            'width': 15,
+                            'height': 15,
+                            'border-width': 0,
+                            'shadow-blur': 10,
+                            'shadow-color': '#06b6d4',
+                            'shadow-opacity': 0.36
                         }
                     },
                     {
                         selector: 'edge',
                         style: {
-                            'curve-style': 'bezier',
-                            'width': 2.4,
+                            'curve-style': 'haystack',
+                            'width': 1.2,
                             'line-fill': 'linear-gradient',
-                            'line-gradient-stop-colors': '#a855f7 #3b82f6',
-                            'line-gradient-stop-positions': '0 100',
-                            'target-arrow-shape': 'none',
-                            'opacity': 0.82,
-                            'label': 'data(label)',
-                            'font-family': 'Inter, system-ui, sans-serif',
-                            'font-size': 8,
-                            'font-weight': '500',
-                            'color': '#cfd6e8',
-                            'text-background-color': '#0f1218',
-                            'text-background-opacity': 0.82,
-                            'text-background-padding': 2,
-                            'text-rotation': 'autorotate'
+                            'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
+                            'line-gradient-stop-positions': '0 55 100',
+                            'opacity': 0.50,
+                            'target-arrow-shape': 'none'
+                        }
+                    },
+                    {
+                        selector: '.faded',
+                        style: {
+                            'opacity': 0.06,
+                            'text-opacity': 0.05
+                        }
+                    },
+                    {
+                        selector: '.highlighted',
+                        style: {
+                            'opacity': 1,
+                            'width': 2.1,
+                            'line-fill': 'linear-gradient',
+                            'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
                         }
                     }
                 ],
                 layout: {
-                    name: 'concentric',
+                    name: 'cose',
+                    animate: false,
                     fit: true,
-                    padding: 34,
-                    animate: true,
-                    animationDuration: 700,
-                    spacingFactor: 1.05,
-                    concentric: function(node) {
-                        return node.data('type') === 'team' ? 2 : 1;
-                    },
-                    levelWidth: function() { return 1; }
+                    padding: 28,
+                    nodeRepulsion: 220000,
+                    idealEdgeLength: 58,
+                    edgeElasticity: 80,
+                    gravity: 0.12,
+                    componentSpacing: 140,
+                    nodeOverlap: 180,
+                    nestingFactor: 0.9,
+                    numIter: 2200,
+                    initialTemp: 180,
+                    coolingFactor: 0.96,
+                    minTemp: 1.0
                 }
+            });
+
+            attachNodeInfo(overviewCy, 'overview-info-panel');
+        })
+        .catch(() => {
+            document.getElementById('overview-tab').innerHTML =
+                '<div class="empty-state">The overview graph could not be loaded.</div>';
+        });
+
+    // QUERY 1
+    let query1Cy = null;
+    let query1AllElements = [];
+
+    function getNeighborhoodElements(playerId) {
+        if (!playerId) return query1AllElements;
+
+        const edgeEls = query1AllElements.filter(el => el.data && el.data.source && el.data.target);
+        const nodeEls = query1AllElements.filter(el => el.data && el.data.id && !el.data.source);
+
+        const relevantEdges = edgeEls.filter(el =>
+            el.data.source === playerId || el.data.target === playerId
+        );
+
+        const includedIds = new Set([playerId]);
+        relevantEdges.forEach(el => {
+            includedIds.add(el.data.source);
+            includedIds.add(el.data.target);
+        });
+
+        const teamIds = new Set(
+            relevantEdges
+                .filter(el => el.data.source === playerId)
+                .map(el => el.data.target)
+        );
+
+        const teammateEdges = edgeEls.filter(el => teamIds.has(el.data.target));
+        teammateEdges.forEach(el => {
+            includedIds.add(el.data.source);
+            includedIds.add(el.data.target);
+        });
+
+        const filteredNodes = nodeEls.filter(el => includedIds.has(el.data.id));
+        const filteredEdges = edgeEls.filter(el =>
+            includedIds.has(el.data.source) && includedIds.has(el.data.target)
+        );
+
+        return [...filteredNodes, ...filteredEdges];
+    }
+
+    function renderQuery1(elements) {
+        if (query1Cy) {
+            query1Cy.destroy();
+        }
+
+        query1Cy = cytoscape({
+            container: document.getElementById('subgraph-cy'),
+            elements: elements,
+            style: getSharedQueryStyles(),
+            layout: getSharedQueryLayout()
+        });
+
+        attachNodeInfo(query1Cy, 'query1-info-panel');
+    }
+
+    fetch('/api/graph-data/query1')
+        .then(res => res.json())
+        .then(data => {
+            query1AllElements = data.elements || [];
+
+            const dropdown = document.getElementById('query1-player-filter');
+            const playerNodes = query1AllElements
+                .filter(el => el.data && el.data.type === 'player')
+                .sort((a, b) => a.data.label.localeCompare(b.data.label));
+
+            playerNodes.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.data.id;
+                option.textContent = player.data.label;
+                dropdown.appendChild(option);
+            });
+
+            renderQuery1(query1AllElements);
+
+            dropdown.addEventListener('change', function() {
+                const playerId = this.value;
+                const filtered = getNeighborhoodElements(playerId);
+                renderQuery1(filtered);
+            });
+
+            document.getElementById('query1-reset-btn').addEventListener('click', function() {
+                dropdown.value = '';
+                renderQuery1(query1AllElements);
             });
         })
         .catch(() => {
             document.getElementById('query1-tab').innerHTML =
-                '<div class="empty-state">The player subgraph could not be loaded.</div>';
+                '<div class="empty-state">The player/team query graph could not be loaded.</div>';
         });
-    {% endif %}
+
+    // QUERY 2
+    let query2Cy = null;
+
+    function renderQuery2(elements) {
+        const graphBox = document.getElementById('query2-cy');
+        const emptyBox = document.getElementById('query2-empty');
+
+        if (query2Cy) {
+            query2Cy.destroy();
+        }
+
+        if (!elements || elements.length === 0) {
+            graphBox.innerHTML = '';
+            emptyBox.style.display = 'block';
+            buildInfoPanel(null, 'query2-info-panel');
+            return;
+        }
+
+        emptyBox.style.display = 'none';
+
+        query2Cy = cytoscape({
+            container: graphBox,
+            elements: elements,
+            style: getSharedQueryStyles(),
+            layout: {
+    name: 'cose',
+    animate: false,
+    fit: true,
+    padding: 40,
+    nodeRepulsion: 220000,
+    idealEdgeLength: 90,
+    edgeElasticity: 90,
+    gravity: 0.08,
+    componentSpacing: 180,
+    nodeOverlap: 180,
+    nestingFactor: 1.0,
+    numIter: 2200,
+    initialTemp: 180,
+    coolingFactor: 0.95,
+    minTemp: 1.0
+}
+        });
+
+        attachNodeInfo(query2Cy, 'query2-info-panel');
+    }
+
+    function loadQuery2() {
+        const mode = document.getElementById('query2-mode').value;
+        const n = document.getElementById('query2-threshold').value || 2;
+
+        fetch(`/api/graph-data/query2?mode=${encodeURIComponent(mode)}&n=${encodeURIComponent(n)}`)
+            .then(res => res.json())
+            .then(data => {
+                renderQuery2(data.elements || []);
+            })
+            .catch(() => {
+                renderQuery2([]);
+            });
+    }
+
+    document.getElementById('query2-run-btn').addEventListener('click', loadQuery2);
+    loadQuery2();
+
+    // QUERY 3
+    let query3Cy = null;
+
+    function renderQuery3(elements) {
+        const graphBox = document.getElementById('query3-cy');
+        const emptyBox = document.getElementById('query3-empty');
+
+        if (query3Cy) {
+            query3Cy.destroy();
+        }
+
+        if (!elements || elements.length === 0) {
+            graphBox.innerHTML = '';
+            emptyBox.style.display = 'block';
+            buildInfoPanel(null, 'query3-info-panel');
+            return;
+        }
+
+        emptyBox.style.display = 'none';
+
+        query3Cy = cytoscape({
+            container: graphBox,
+            elements: elements,
+            style: getSharedQueryStyles(),
+            layout: getSharedQueryLayout()
+        });
+
+        attachNodeInfo(query3Cy, 'query3-info-panel');
+    }
+
+    function loadQuery3() {
+        fetch('/api/graph-data/query3')
+            .then(res => res.json())
+            .then(data => {
+                renderQuery3(data.elements || []);
+            })
+            .catch(() => {
+                renderQuery3([]);
+            });
+    }
+
+    document.getElementById('query3-run-btn').addEventListener('click', loadQuery3);
+    loadQuery3();
 </script>
 {% endblock %}

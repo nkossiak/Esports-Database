@@ -44,7 +44,6 @@ def get_connected_nodes(conn, node_id):
     return conn.execute(query, (node_id, node_id, node_id, node_id)).fetchall()
 
 # --- ROUTES ---
-
 @app.route('/')
 def index():
     conn = get_db_connection()
@@ -206,18 +205,14 @@ def tournament_details(node_id):
         participants=participants
     )
 
-@app.route('/reports', methods=['GET', 'POST'])
+@app.route('/reports')
 def reports_page():
     conn = get_db_connection()
-    selected_player = None
-    if request.method == 'POST':
-        selected_player = request.form.get('player_name')
-
     players = conn.execute(
         'SELECT Name FROM Nodes WHERE NodeType = "Player" ORDER BY Name'
     ).fetchall()
     conn.close()
-    return render_template('reports.html', players=players, selected_player=selected_player)
+    return render_template('reports.html', players=players)
 
 # --- OVERVIEW GRAPH API ---
 @app.route('/api/graph-data/all')
@@ -266,7 +261,7 @@ def all_graph_data():
     conn.close()
     return jsonify({'elements': elements})
 
-# --- CLICK DETAILS API FOR OVERVIEW GRAPH ---
+# --- CLICK DETAILS API FOR ALL TABS ---
 @app.route('/api/node-details/<int:node_id>')
 def node_details(node_id):
     conn = get_db_connection()
@@ -303,78 +298,273 @@ def node_details(node_id):
         'connections': connections
     })
 
-# --- EXISTING PLAYER SUBGRAPH API ---
-@app.route('/api/graph-data/<player_name>')
-def filtered_graph_data(player_name):
+# --- QUERY 1 GRAPH API ---
+@app.route('/api/graph-data/query1')
+def query1_graph_data():
     conn = get_db_connection()
-    player = conn.execute(
-        'SELECT NodeID, Name FROM Nodes WHERE Name = ? AND NodeType = "Player"',
-        (player_name,)
-    ).fetchone()
 
-    if not player:
+    nodes = conn.execute('''
+        SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes
+        FROM Nodes n
+        JOIN (
+            SELECT SourceNodeID AS NodeID FROM Edges WHERE EdgeType = "Plays_For"
+            UNION
+            SELECT TargetNodeID AS NodeID FROM Edges WHERE EdgeType = "Plays_For"
+        ) used_nodes ON n.NodeID = used_nodes.NodeID
+        WHERE n.NodeType IN ("Player", "Team")
+        ORDER BY n.NodeType, n.Name
+    ''').fetchall()
+
+    edges = conn.execute('''
+        SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+        FROM Edges
+        WHERE EdgeType = "Plays_For"
+    ''').fetchall()
+
+    elements = []
+
+    for node in nodes:
+        attrs = safe_json_load(node['Attributes'])
+        elements.append({
+            'data': {
+                'id': str(node['NodeID']),
+                'label': node['Name'],
+                'type': node['NodeType'].lower(),
+                'nodeType': node['NodeType'],
+                'attributes': attrs
+            }
+        })
+
+    for edge in edges:
+        elements.append({
+            'data': {
+                'id': f"q1e{edge['EdgeID']}",
+                'source': str(edge['SourceNodeID']),
+                'target': str(edge['TargetNodeID']),
+                'label': edge['EdgeType']
+            }
+        })
+
+    conn.close()
+    return jsonify({'elements': elements})
+
+# --- QUERY 2 GRAPH API ---
+@app.route('/api/graph-data/query2')
+def query2_graph_data():
+    mode = request.args.get('mode', 'participant').strip().lower()
+
+    try:
+        n = int(request.args.get('n', 2))
+    except (TypeError, ValueError):
+        n = 2
+
+    if n < 1:
+        n = 1
+
+    conn = get_db_connection()
+
+    if mode == 'winner':
+        qualifying_teams = conn.execute('''
+            SELECT t.NodeID, t.Name, t.NodeType, t.Attributes,
+                   COUNT(DISTINCT e.SourceNodeID) AS total_count
+            FROM Nodes t
+            JOIN Edges e
+              ON e.TargetNodeID = t.NodeID
+            WHERE t.NodeType = "Team"
+              AND e.EdgeType = "Won_By"
+            GROUP BY t.NodeID, t.Name, t.NodeType, t.Attributes
+            HAVING COUNT(DISTINCT e.SourceNodeID) >= ?
+            ORDER BY total_count DESC, t.Name
+        ''', (n,)).fetchall()
+
+        team_ids = [row['NodeID'] for row in qualifying_teams]
+
+        if not team_ids:
+            conn.close()
+            return jsonify({'elements': []})
+
+        placeholders = ','.join(['?'] * len(team_ids))
+
+        tournaments = conn.execute(f'''
+            SELECT DISTINCT tr.NodeID, tr.Name, tr.NodeType, tr.Attributes
+            FROM Nodes tr
+            JOIN Edges e
+              ON e.SourceNodeID = tr.NodeID
+            WHERE tr.NodeType = "Tournament"
+              AND e.EdgeType = "Won_By"
+              AND e.TargetNodeID IN ({placeholders})
+            ORDER BY tr.Name
+        ''', team_ids).fetchall()
+
+        edges = conn.execute(f'''
+            SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+            FROM Edges
+            WHERE EdgeType = "Won_By"
+              AND TargetNodeID IN ({placeholders})
+        ''', team_ids).fetchall()
+
+    else:
+        qualifying_teams = conn.execute('''
+            SELECT t.NodeID, t.Name, t.NodeType, t.Attributes,
+                   COUNT(DISTINCT e.SourceNodeID) AS total_count
+            FROM Nodes t
+            JOIN Edges e
+              ON e.TargetNodeID = t.NodeID
+            WHERE t.NodeType = "Team"
+              AND e.EdgeType = "Played_In"
+            GROUP BY t.NodeID, t.Name, t.NodeType, t.Attributes
+            HAVING COUNT(DISTINCT e.SourceNodeID) >= ?
+            ORDER BY total_count DESC, t.Name
+        ''', (n,)).fetchall()
+
+        team_ids = [row['NodeID'] for row in qualifying_teams]
+
+        if not team_ids:
+            conn.close()
+            return jsonify({'elements': []})
+
+        placeholders = ','.join(['?'] * len(team_ids))
+
+        tournaments = conn.execute(f'''
+            SELECT DISTINCT tr.NodeID, tr.Name, tr.NodeType, tr.Attributes
+            FROM Nodes tr
+            JOIN Edges e
+              ON e.SourceNodeID = tr.NodeID
+            WHERE tr.NodeType = "Tournament"
+              AND e.EdgeType = "Played_In"
+              AND e.TargetNodeID IN ({placeholders})
+            ORDER BY tr.Name
+        ''', team_ids).fetchall()
+
+        edges = conn.execute(f'''
+            SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+            FROM Edges
+            WHERE EdgeType = "Played_In"
+              AND TargetNodeID IN ({placeholders})
+        ''', team_ids).fetchall()
+
+    elements = []
+
+    for team in qualifying_teams:
+        attrs = safe_json_load(team['Attributes'])
+        attrs['threshold_count'] = team['total_count']
+        elements.append({
+            'data': {
+                'id': str(team['NodeID']),
+                'label': team['Name'],
+                'type': 'team',
+                'nodeType': team['NodeType'],
+                'attributes': attrs,
+                'count': team['total_count']
+            }
+        })
+
+    for tournament in tournaments:
+        attrs = safe_json_load(tournament['Attributes'])
+        elements.append({
+            'data': {
+                'id': str(tournament['NodeID']),
+                'label': tournament['Name'],
+                'type': 'tournament',
+                'nodeType': tournament['NodeType'],
+                'attributes': attrs
+            }
+        })
+
+    for edge in edges:
+        elements.append({
+            'data': {
+                'id': f"q2e{edge['EdgeID']}",
+                'source': str(edge['SourceNodeID']),
+                'target': str(edge['TargetNodeID']),
+                'label': edge['EdgeType']
+            }
+        })
+
+    conn.close()
+    return jsonify({'elements': elements})
+
+# --- QUERY 3 GRAPH API ---
+@app.route('/api/graph-data/query3')
+def query3_graph_data():
+    conn = get_db_connection()
+
+    tournaments = conn.execute('''
+        SELECT NodeID, Name, NodeType, Attributes
+        FROM Nodes
+        WHERE NodeType = "Tournament"
+    ''').fetchall()
+
+    q1_tournaments = []
+    q1_ids = []
+
+    for tournament in tournaments:
+        attrs = safe_json_load(tournament['Attributes'])
+        raw_prize = str(attrs.get('prize_pool', '')).replace(',', '').replace('$', '').strip()
+
+        try:
+            prize_value = float(raw_prize)
+        except:
+            prize_value = 0
+
+        if prize_value > 1000000:
+            q1_tournaments.append((tournament, attrs))
+            q1_ids.append(tournament['NodeID'])
+
+    if not q1_ids:
         conn.close()
         return jsonify({'elements': []})
 
-    p_id = player['NodeID']
-    team_ids_query = 'SELECT TargetNodeID FROM Edges WHERE SourceNodeID = ? AND EdgeType = "Plays_For"'
-    team_ids = [row['TargetNodeID'] for row in conn.execute(team_ids_query, (p_id,)).fetchall()]
+    placeholders = ','.join(['?'] * len(q1_ids))
 
-    if not team_ids:
-        conn.close()
-        return jsonify({
-            'elements': [
-                {'data': {'id': str(p_id), 'label': player['Name'], 'type': 'player'}}
-            ]
-        })
+    team_nodes = conn.execute(f'''
+        SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes
+        FROM Nodes n
+        JOIN Edges e ON n.NodeID = e.TargetNodeID
+        WHERE n.NodeType = "Team"
+          AND e.EdgeType = "Played_In"
+          AND e.SourceNodeID IN ({placeholders})
+    ''', q1_ids).fetchall()
 
-    placeholders = ','.join(['?'] * len(team_ids))
-    edges_query = f'''
-        SELECT e.SourceNodeID, e.TargetNodeID, n.Name as player_name
-        FROM Edges e
-        JOIN Nodes n ON e.SourceNodeID = n.NodeID
-        WHERE e.TargetNodeID IN ({placeholders}) AND e.EdgeType = "Plays_For"
-    '''
-    relevant_edges = conn.execute(edges_query, team_ids).fetchall()
-    team_nodes = conn.execute(
-        f'SELECT NodeID, Name FROM Nodes WHERE NodeID IN ({placeholders})',
-        team_ids
-    ).fetchall()
-    conn.close()
+    edges = conn.execute(f'''
+        SELECT EdgeID, SourceNodeID, TargetNodeID
+        FROM Edges
+        WHERE EdgeType = "Played_In"
+          AND SourceNodeID IN ({placeholders})
+    ''', q1_ids).fetchall()
 
     elements = []
-    seen_nodes = set()
+
+    for tournament, attrs in q1_tournaments:
+        elements.append({
+            'data': {
+                'id': str(tournament['NodeID']),
+                'label': tournament['Name'],
+                'type': 'tournament',
+                'attributes': attrs
+            }
+        })
 
     for team in team_nodes:
         elements.append({
             'data': {
                 'id': str(team['NodeID']),
                 'label': team['Name'],
-                'type': 'team'
+                'type': 'team',
+                'attributes': safe_json_load(team['Attributes'])
             }
         })
-        seen_nodes.add(team['NodeID'])
 
-    for edge in relevant_edges:
-        player_id = edge['SourceNodeID']
-        team_id = edge['TargetNodeID']
-        if player_id not in seen_nodes:
-            elements.append({
-                'data': {
-                    'id': str(player_id),
-                    'label': edge['player_name'],
-                    'type': 'player'
-                }
-            })
-            seen_nodes.add(player_id)
+    for edge in edges:
         elements.append({
             'data': {
-                'source': str(player_id),
-                'target': str(team_id),
-                'label': 'Plays_For'
+                'id': f"q3e{edge['EdgeID']}",
+                'source': str(edge['SourceNodeID']),
+                'target': str(edge['TargetNodeID'])
             }
         })
 
+    conn.close()
     return jsonify({'elements': elements})
 
 if __name__ == '__main__':
