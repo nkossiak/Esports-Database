@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <nav style="margin-bottom: 20px; font-size: 0.9rem;">
+        <a href="/" style="color: #33285b;">Home</a> / 
+        <a href="/tournaments" style="color: #33285b;">Tournaments</a> / 
+        <span style="color: #777;">{{ tournament['Name'] }}</span>
+    </nav>
+
+    <div style="display: flex; gap: 30px; align-items: flex-start;">
+        
+        <div style="flex: 1; background: #eef2ff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+            <h3 style="margin-top: 0; color: #33285b;">Tournament Info</h3>
+            <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+            
+            <p><strong>Location:</strong> {{ details.get('country', 'N/A') }}</p>
+            <p><strong>Year:</strong> {{ details.get('year', 'N/A') }}</p>
+            <p><strong>Prize Pool:</strong> <span style="color: #28a745; font-weight: bold;">{{ details.get('prize_pool', 'TBD') }}</span></p>
+            
+            <div style="margin-top: 25px; padding: 15px; background: white; border-radius: 6px; border: 2px solid #33285b;">
+                <h4 style="margin: 0 0 10px 0; color: #33285b;">🏆 Winner</h4>
+                {% if winner %}
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #33285b;">
+                        ⭐ {{ winner['Name'] }}
+                    </div>
+                {% else %}
+                    <p style="margin: 0; color: #777; font-style: italic;">Results pending...</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="flex: 2;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #33285b;">Participating Teams</h3>
+                <span style="background: #5d5863; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">
+                    {{ participants|length }} Teams
+                </span>
+            </div>
+
+            {% if participants %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    {% for team in participants %}
+                    <div style="padding: 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; display: flex; align-items: center;">
+                        <span style="color: #33285b; margin-right: 10px;">•</span>
+                        <strong>{{ team['Name'] }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 40px; border: 1px dashed #ccc; border-radius: 8px; color: #777;">
+                    No team participation data recorded for this event.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

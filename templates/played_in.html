@@ -1,50 +1,64 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Tournament Participation</h2>
+<div class="container mt-4">
+    <h2>Tournament Participation</h2>
 
-<form method="POST">
-    <select name="team_id" required>
-        <option value="">Select Team</option>
-        {% for team in teams %}
-            <option value="{{ team.NodeID }}">{{ team.Name }}</option>
-        {% endfor %}
-    </select>
+    <form method="POST" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <select name="team_id" class="form-select" required>
+                <option value="">Select Team</option>
+                {% for team in teams %}
+                    <option value="{{ team.NodeID }}">{{ team.Name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <select name="tournament_id" required>
-        <option value="">Select Tournament</option>
-        {% for t in tournaments %}
-            <option value="{{ t.NodeID }}">{{ t.Name }}</option>
-        {% endfor %}
-    </select>
+        <div class="col-md-4">
+            <select name="tournament_id" class="form-select" required>
+                <option value="">Select Tournament</option>
+                {% for t in tournaments %}
+                    <option value="{{ t.NodeID }}">{{ t.Name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <input name="date_played" type="date">
-    <button type="submit">Record Participation</button>
-</form>
+        <div class="col-md-2">
+            <input name="date_played" type="date" class="form-control">
+        </div>
+        
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Record</button>
+        </div>
+    </form>
 
-<hr>
+    <hr>
 
-<table>
-    <thead>
-        <tr>
-            <th>EdgeID</th>
-            <th>Team</th>
-            <th>Tournament</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in rows %}
-        <tr>
-            <td>{{ row.EdgeID }}</td>
-            <td>{{ row.team_name }}</td>
-            <td>{{ row.tournament_name }}</td>
-            <td>
-                {% if row.Metadata %}
-                    {{ (row.Metadata | from_json).date if 'date' in (row.Metadata | from_json) else '' }}
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table class="table table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>EdgeID</th>
+                <th>Tournament</th> 
+                <th>Team</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.EdgeID }}</td>
+                <td>{{ row.tournament_name }}</td>
+                <td>{{ row.team_name }}</td>
+                <td>
+                    {% if row.Metadata %}
+                        {% set meta = row.Metadata | from_json %}
+                        {{ meta.date if meta and 'date' in meta else 'N/A' }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
