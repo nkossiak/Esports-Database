@@ -78,8 +78,7 @@
     .graph-frame,
     .query-frame,
     .toolbar,
-    .info-panel,
-    .coming-soon {
+    .info-panel {
         background: rgba(10, 12, 18, 0.88);
         border: none;
         border-radius: 8px;
@@ -89,8 +88,7 @@
     .graph-frame,
     .query-frame,
     .toolbar,
-    .info-panel,
-    .coming-soon {
+    .info-panel {
         padding: 14px;
     }
 
@@ -230,6 +228,11 @@
         grid-template-columns: minmax(230px, 1fr) auto;
     }
 
+    .toolbar.query3-toolbar form {
+        grid-template-columns: auto;
+        justify-content: start;
+    }
+
     .toolbar label {
         display: block;
         margin-bottom: 8px;
@@ -320,7 +323,7 @@
                     <div class="legend">
                         <div class="legend-item"><span class="legend-swatch player"></span> Player</div>
                         <div class="legend-item"><span class="legend-swatch team"></span> Team</div>
-                        <div class="legend-item">Edges represent <strong>Plays_For</strong></div>
+                        <div class="legend-item">Edges: Plays_For</div>
                     </div>
                 </div>
 
@@ -360,7 +363,7 @@
                     <div class="legend">
                         <div class="legend-item"><span class="legend-swatch team"></span> Qualifying Team</div>
                         <div class="legend-item"><span class="legend-swatch tournament"></span> Tournament</div>
-                        <div class="legend-item">Mode determines whether edges represent <strong>Played_In</strong> or <strong>Won_By</strong></div>
+                        <div class="legend-item">Mode: Played_In or Won_By</div>
                     </div>
                 </div>
 
@@ -377,48 +380,39 @@
     </section>
 
     <!-- QUERY 3 -->
-<section id="query3-tab" class="tab-pane">
-    <div class="query-layout">
-        <div class="toolbar">
-            <form onsubmit="return false;">
-                <div>
-                    <label for="query3-run-btn">Run Query</label>
-                    <button type="button" id="query3-run-btn">Visualize Query 3</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="query-layout-two-col">
-            <div class="query-frame">
-                <div id="query3-cy"></div>
-
-                <div class="legend">
-                    <div class="legend-item">
-                        <span class="legend-swatch tournament"></span> Q1 Tournament
+    <section id="query3-tab" class="tab-pane">
+        <div class="query-layout">
+            <div class="toolbar query3-toolbar">
+                <form onsubmit="return false;">
+                    <div>
+                        <label for="query3-run-btn">Run Query</label>
+                        <button type="button" id="query3-run-btn">Visualize Query 3</button>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-swatch team"></span> Team
-                    </div>
-                    <div class="legend-item">
-                        Q1: Prize Pool &gt; 1M
-                    </div>
-                    <div class="legend-item">
-                        Network: Tournament → Team
-                    </div>
-                </div>
+                </form>
             </div>
 
-            <aside class="info-panel" id="query3-info-panel">
-                <h4>Node Details</h4>
-                <div class="empty-state">No node selected yet.</div>
-            </aside>
-        </div>
+            <div class="query-layout-two-col">
+                <div class="query-frame">
+                    <div id="query3-cy"></div>
+                    <div class="legend">
+                        <div class="legend-item"><span class="legend-swatch tournament"></span> Q1 Tournament</div>
+                        <div class="legend-item"><span class="legend-swatch team"></span> Team</div>
+                        <div class="legend-item">Q1: Prize Pool &gt; 1M</div>
+                        <div class="legend-item">Network: Tournament → Team</div>
+                    </div>
+                </div>
 
-        <div id="query3-empty" class="empty-state" style="display:none;">
-            No Q1 tournaments were found.
+                <aside class="info-panel" id="query3-info-panel">
+                    <h4>Node Details</h4>
+                    <div class="empty-state">No node selected yet.</div>
+                </aside>
+            </div>
+
+            <div id="query3-empty" class="empty-state" style="display:none;">
+                No Q1 tournaments were found.
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
@@ -507,109 +501,108 @@
         });
     }
 
-function getSharedQueryStyles() {
-    return [
-        {
-            selector: 'node',
-            style: {
-                'font-family': 'Exo 2, sans-serif',
-                'label': 'data(label)',
-                'color': '#e8eefb',
-                'font-size': 5,
-                'font-weight': '300',   // NOT bold
-                'text-wrap': 'wrap',
-                'text-max-width': 60,
-                'text-valign': 'bottom',
-                'text-halign': 'center',
-                'text-margin-y': 7,
-                'line-height': 1,
-                'text-outline-width': 0,
-                'border-width': 0
+    function getSharedQueryStyles() {
+        return [
+            {
+                selector: 'node',
+                style: {
+                    'font-family': 'Exo 2, sans-serif',
+                    'label': 'data(label)',
+                    'color': '#e8eefb',
+                    'font-size': 5,
+                    'font-weight': '300',
+                    'text-wrap': 'ellipsis',
+                    'text-max-width': 70,
+                    'text-valign': 'bottom',
+                    'text-halign': 'center',
+                    'text-margin-y': 6,
+                    'text-outline-width': 0,
+                    'border-width': 0
+                }
+            },
+            {
+                selector: 'node[type="player"]',
+                style: {
+                    'shape': 'ellipse',
+                    'background-color': '#7c3aed',
+                    'width': 15,
+                    'height': 15,
+                    'shadow-blur': 10,
+                    'shadow-color': '#7c3aed',
+                    'shadow-opacity': 0.38
+                }
+            },
+            {
+                selector: 'node[type="team"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#2563eb',
+                    'width': 16,
+                    'height': 16,
+                    'shadow-blur': 10,
+                    'shadow-color': '#2563eb',
+                    'shadow-opacity': 0.36
+                }
+            },
+            {
+                selector: 'node[type="tournament"]',
+                style: {
+                    'shape': 'diamond',
+                    'background-color': '#06b6d4',
+                    'width': 16,
+                    'height': 16,
+                    'shadow-blur': 10,
+                    'shadow-color': '#06b6d4',
+                    'shadow-opacity': 0.36
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'label': '',
+                    'curve-style': 'haystack',
+                    'width': 1.6,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
+                    'line-gradient-stop-positions': '0 55 100',
+                    'opacity': 0.50,
+                    'target-arrow-shape': 'none'
+                }
+            },
+            {
+                selector: '.faded',
+                style: {
+                    'opacity': 0.06,
+                    'text-opacity': 0.05
+                }
+            },
+            {
+                selector: '.highlighted',
+                style: {
+                    'opacity': 1,
+                    'width': 2.1,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
+                }
             }
-        },
-        {
-            selector: 'node[type="player"]',
-            style: {
-                'shape': 'ellipse',
-                'background-color': '#7c3aed',
-                'width': 15,
-                'height': 15,
-                'shadow-blur': 10,
-                'shadow-color': '#7c3aed',
-                'shadow-opacity': 0.38
-            }
-        },
-        {
-            selector: 'node[type="team"]',
-            style: {
-                'shape': 'round-rectangle',
-                'background-color': '#2563eb',
-                'width': 16,      // ← keep small
-                'height': 16,
-                'shadow-blur': 10,
-                'shadow-color': '#2563eb',
-                'shadow-opacity': 0.36
-            }
-        },
-        {
-            selector: 'node[type="tournament"]',
-            style: {
-                'shape': 'diamond',
-                'background-color': '#06b6d4',
-                'width': 16,
-                'height': 16,
-                'shadow-blur': 10,
-                'shadow-color': '#06b6d4',
-                'shadow-opacity': 0.36
-            }
-        },
-        {
-            selector: 'edge',
-            style: {
-                'label': '',
-                'curve-style': 'haystack',
-                'width': 1.6,
-                'line-fill': 'linear-gradient',
-                'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
-                'line-gradient-stop-positions': '0 55 100',
-                'opacity': 0.50,
-                'target-arrow-shape': 'none'
-            }
-        },
-        {
-            selector: '.faded',
-            style: {
-                'opacity': 0.06,
-                'text-opacity': 0.05
-            }
-        },
-        {
-            selector: '.highlighted',
-            style: {
-                'opacity': 1,
-                'width': 2.1,
-                'line-fill': 'linear-gradient',
-                'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
-            }
-        }
-    ];
-}
+        ];
+    }
 
     function getSharedQueryLayout() {
         return {
             name: 'cose',
             animate: false,
             fit: true,
-            padding: 28,
-            nodeRepulsion: 140000,
-            idealEdgeLength: 52,
-            edgeElasticity: 80,
-            gravity: 0.10,
-            componentSpacing: 120,
-            nodeOverlap: 120,
+            padding: 40,
+            nodeRepulsion: 160000,
+            idealEdgeLength: 70,
+            edgeElasticity: 90,
+            gravity: 0.08,
+            componentSpacing: 160,
+            nodeOverlap: 220,
             nestingFactor: 0.9,
-            numIter: 1800,
-            initialTemp: 160,
+            numIter: 2200,
+            initialTemp: 180,
             coolingFactor: 0.95,
             minTemp: 1.0
         };
@@ -855,22 +848,22 @@ function getSharedQueryStyles() {
             elements: elements,
             style: getSharedQueryStyles(),
             layout: {
-    name: 'cose',
-    animate: false,
-    fit: true,
-    padding: 40,
-    nodeRepulsion: 220000,
-    idealEdgeLength: 90,
-    edgeElasticity: 90,
-    gravity: 0.08,
-    componentSpacing: 180,
-    nodeOverlap: 180,
-    nestingFactor: 1.0,
-    numIter: 2200,
-    initialTemp: 180,
-    coolingFactor: 0.95,
-    minTemp: 1.0
-}
+                name: 'cose',
+                animate: false,
+                fit: true,
+                padding: 50,
+                nodeRepulsion: 240000,
+                idealEdgeLength: 95,
+                edgeElasticity: 100,
+                gravity: 0.07,
+                componentSpacing: 190,
+                nodeOverlap: 240,
+                nestingFactor: 1.0,
+                numIter: 2400,
+                initialTemp: 180,
+                coolingFactor: 0.95,
+                minTemp: 1.0
+            }
         });
 
         attachNodeInfo(query2Cy, 'query2-info-panel');
@@ -917,7 +910,23 @@ function getSharedQueryStyles() {
             container: graphBox,
             elements: elements,
             style: getSharedQueryStyles(),
-            layout: getSharedQueryLayout()
+            layout: {
+                name: 'cose',
+                animate: false,
+                fit: true,
+                padding: 50,
+                nodeRepulsion: 220000,
+                idealEdgeLength: 90,
+                edgeElasticity: 100,
+                gravity: 0.07,
+                componentSpacing: 180,
+                nodeOverlap: 220,
+                nestingFactor: 1.0,
+                numIter: 2200,
+                initialTemp: 180,
+                coolingFactor: 0.95,
+                minTemp: 1.0
+            }
         });
 
         attachNodeInfo(query3Cy, 'query3-info-panel');

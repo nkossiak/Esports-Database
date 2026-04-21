@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import os
+import re
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -42,6 +43,29 @@ def get_connected_nodes(conn, node_id):
         ORDER BY n.NodeType, n.Name
     '''
     return conn.execute(query, (node_id, node_id, node_id, node_id)).fetchall()
+
+def parse_prize_value(raw_value):
+    if raw_value is None:
+        return 0.0
+
+    text = str(raw_value).strip().upper()
+    if not text:
+        return 0.0
+
+    multiplier = 1.0
+    if 'M' in text:
+        multiplier = 1_000_000.0
+    elif 'K' in text:
+        multiplier = 1_000.0
+
+    cleaned = re.sub(r'[^0-9.]', '', text)
+    if not cleaned:
+        return 0.0
+
+    try:
+        return float(cleaned) * multiplier
+    except ValueError:
+        return 0.0
 
 # --- ROUTES ---
 @app.route('/')
@@ -340,8 +364,7 @@ def query1_graph_data():
             'data': {
                 'id': f"q1e{edge['EdgeID']}",
                 'source': str(edge['SourceNodeID']),
-                'target': str(edge['TargetNodeID']),
-                'label': edge['EdgeType']
+                'target': str(edge['TargetNodeID'])
             }
         })
 
@@ -397,7 +420,7 @@ def query2_graph_data():
         ''', team_ids).fetchall()
 
         edges = conn.execute(f'''
-            SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+            SELECT EdgeID, SourceNodeID, TargetNodeID
             FROM Edges
             WHERE EdgeType = "Won_By"
               AND TargetNodeID IN ({placeholders})
@@ -437,7 +460,7 @@ def query2_graph_data():
         ''', team_ids).fetchall()
 
         edges = conn.execute(f'''
-            SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
+            SELECT EdgeID, SourceNodeID, TargetNodeID
             FROM Edges
             WHERE EdgeType = "Played_In"
               AND TargetNodeID IN ({placeholders})
@@ -476,8 +499,7 @@ def query2_graph_data():
             'data': {
                 'id': f"q2e{edge['EdgeID']}",
                 'source': str(edge['SourceNodeID']),
-                'target': str(edge['TargetNodeID']),
-                'label': edge['EdgeType']
+                'target': str(edge['TargetNodeID'])
             }
         })
 
@@ -489,25 +511,21 @@ def query2_graph_data():
 def query3_graph_data():
     conn = get_db_connection()
 
-    tournaments = conn.execute('''
+    all_tournaments = conn.execute('''
         SELECT NodeID, Name, NodeType, Attributes
         FROM Nodes
         WHERE NodeType = "Tournament"
+        ORDER BY Name
     ''').fetchall()
 
     q1_tournaments = []
     q1_ids = []
 
-    for tournament in tournaments:
+    for tournament in all_tournaments:
         attrs = safe_json_load(tournament['Attributes'])
-        raw_prize = str(attrs.get('prize_pool', '')).replace(',', '').replace('$', '').strip()
+        prize_value = parse_prize_value(attrs.get('prize_pool'))
 
-        try:
-            prize_value = float(raw_prize)
-        except:
-            prize_value = 0
-
-        if prize_value > 1000000:
+        if prize_value > 1_000_000:
             q1_tournaments.append((tournament, attrs))
             q1_ids.append(tournament['NodeID'])
 
@@ -517,6 +535,7 @@ def query3_graph_data():
 
     placeholders = ','.join(['?'] * len(q1_ids))
 
+    # Teams that played in those Q1 tournaments
     team_nodes = conn.execute(f'''
         SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes
         FROM Nodes n
@@ -524,6 +543,7 @@ def query3_graph_data():
         WHERE n.NodeType = "Team"
           AND e.EdgeType = "Played_In"
           AND e.SourceNodeID IN ({placeholders})
+        ORDER BY n.Name
     ''', q1_ids).fetchall()
 
     edges = conn.execute(f'''
@@ -541,6 +561,7 @@ def query3_graph_data():
                 'id': str(tournament['NodeID']),
                 'label': tournament['Name'],
                 'type': 'tournament',
+                'nodeType': tournament['NodeType'],
                 'attributes': attrs
             }
         })
@@ -551,6 +572,7 @@ def query3_graph_data():
                 'id': str(team['NodeID']),
                 'label': team['Name'],
                 'type': 'team',
+                'nodeType': team['NodeType'],
                 'attributes': safe_json_load(team['Attributes'])
             }
         })
