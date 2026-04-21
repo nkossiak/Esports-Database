@@ -12,20 +12,6 @@
         border-radius: 0;
     }
 
-    .reports-shell {
-        display: grid;
-        gap: 16px;
-    }
-
-    .reports-header {
-        padding: 4px 4px 0 4px;
-    }
-
-    .reports-header h2 {
-        margin: 0;
-        font-size: 1.75rem;
-    }
-
     .subtabs {
         display: flex;
         flex-wrap: wrap;
@@ -341,6 +327,28 @@
         padding: 14px 12px;
     }
 
+    .query-report-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px 12px 12px;
+        border-top: 1px solid #1f2430;
+        background: #0d1017;
+    }
+
+    .query-report-page-status {
+        color: #8f98ab;
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    .query-report-next-btn {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+        box-shadow: none;
+    }
+
     .empty-state {
         text-align: center;
         padding: 40px 24px;
@@ -380,11 +388,6 @@
     }
 </style>
 
-<div class="reports-shell">
-    <div class="reports-header">
-        <h2>Reports</h2>
-    </div>
-
     <div class="subtabs">
         <button class="subtab-btn active" data-tab="overview-tab">Overview Graph</button>
         <button class="subtab-btn" data-tab="query1-tab">Query 1</button>
@@ -423,22 +426,22 @@
             <div class="query-layout-three-col">
                 <aside class="report-panel" id="query1-report-panel">
                     <div class="report-copy">
-                        <h3 class="report-title">Roster Relationship Report</h3>
-                        <p class="query-report-desc">Shows each player and the team they are connected to through the <strong>Plays_For</strong> relationship.</p>
+                        <h3 class="report-title">Roster Relationship</h3>
+                        <p class="query-report-desc"><strong>Relationship:</strong> Plays_For</p>
                     </div>
 
                     <div class="report-controls">
                         <div class="report-controls-grid one-field">
                             <div>
-                                <label for="query1-player-filter">Player Filter</label>
+                                <label for="query1-player-filter">Show:</label>
                                 <select id="query1-player-filter">
-                                    <option value="">Show All Players + Teams</option>
+                                    <option value="">All</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="control-actions">
-                            <button type="button" id="query1-reset-btn">Reset View</button>
+                            <button type="button" id="query1-reset-btn">Update</button>
                         </div>
                     </div>
 
@@ -453,6 +456,10 @@
                             <tbody id="query1-report-body"></tbody>
                         </table>
                         <div id="query1-report-empty" class="query-report-empty" style="display:none;">No roster rows match the selected filter.</div>
+                        <div class="query-report-footer">
+                            <div id="query1-report-page-status" class="query-report-page-status">Showing 0 of 0</div>
+                            <button type="button" id="query1-report-next" class="query-report-next-btn">Next</button>
+                        </div>
                     </div>
                 </aside>
 
@@ -481,14 +488,14 @@
             <div class="query-layout-three-col">
                 <aside class="report-panel" id="query2-report-panel">
                     <div class="report-copy">
-                        <h3 class="report-title">Esports Index Qualification Report</h3>
-                        <p class="query-report-desc">Shows the teams that satisfy the selected esports index threshold <strong>h</strong> under the chosen mode.</p>
+                        <h3 class="report-title">Index Qualification</h3>
+                        <p class="query-report-desc">Teams in threshold <strong>h</strong> under the chosen mode.</p>
                     </div>
 
                     <div class="report-controls">
                         <div class="report-controls-grid">
                             <div>
-                                <label for="query2-threshold">Esports Index Threshold (h)</label>
+                                <label for="query2-threshold">Index (h)</label>
                                 <input type="number" id="query2-threshold" min="1" value="2">
                             </div>
 
@@ -502,7 +509,7 @@
                         </div>
 
                         <div class="control-actions">
-                            <button type="button" id="query2-run-btn">Run Query 2</button>
+                            <button type="button" id="query2-run-btn">Update</button>
                         </div>
                     </div>
 
@@ -519,6 +526,10 @@
                             <tbody id="query2-report-body"></tbody>
                         </table>
                         <div id="query2-report-empty" class="query-report-empty" style="display:none;">No teams matched the selected threshold.</div>
+                        <div class="query-report-footer">
+                            <div id="query2-report-page-status" class="query-report-page-status">Showing 0 of 0</div>
+                            <button type="button" id="query2-report-next" class="query-report-next-btn">Next</button>
+                        </div>
                     </div>
                 </aside>
 
@@ -553,13 +564,13 @@
                 <aside class="report-panel" id="query3-report-panel">
                     <div class="report-copy">
                         <h3 class="report-title">Q1 Tournament Network Report</h3>
-                        <p class="query-report-desc">Shows Q1 tournaments, defined here as tournaments with prize pools above <strong>$1M</strong>, and the teams linked to each one.</p>
+                        <p class="query-report-desc">Tournaments with prize pools ><strong>$1M</strong>.</p>
                     </div>
 
                     <div class="report-controls">
                         <div class="report-controls-grid button-only"></div>
                         <div class="control-actions">
-                            <button type="button" id="query3-run-btn">Run Query 3</button>
+                            <button type="button" id="query3-run-btn">Update</button>
                         </div>
                     </div>
 
@@ -575,6 +586,10 @@
                             <tbody id="query3-report-body"></tbody>
                         </table>
                         <div id="query3-report-empty" class="query-report-empty" style="display:none;">No Q1 tournaments were found.</div>
+                        <div class="query-report-footer">
+                            <div id="query3-report-page-status" class="query-report-page-status">Showing 0 of 0</div>
+                            <button type="button" id="query3-report-next" class="query-report-next-btn">Next</button>
+                        </div>
                     </div>
                 </aside>
 
@@ -930,22 +945,78 @@
             .replace(/'/g, '&#39;');
     }
 
-    function renderSimpleReportRows(tbodyId, emptyId, rows, columns) {
+    const REPORT_PAGE_SIZE = 12;
+    const reportPaginationState = {
+        query1: { rows: [], page: 0 },
+        query2: { rows: [], page: 0 },
+        query3: { rows: [], page: 0 }
+    };
+
+    function updateReportPageStatus(statusId, startIndex, endIndex, total) {
+        const status = document.getElementById(statusId);
+        if (!status) return;
+
+        if (!total) {
+            status.textContent = 'Showing 0 of 0';
+            return;
+        }
+
+        status.textContent = `Showing ${startIndex}-${endIndex} of ${total}`;
+    }
+
+    function renderPaginatedReportRows(config) {
+        const { key, tbodyId, emptyId, statusId, nextBtnId, rows, columns, resetPage = true } = config;
         const tbody = document.getElementById(tbodyId);
         const emptyBox = document.getElementById(emptyId);
+        const nextBtn = document.getElementById(nextBtnId);
+        const state = reportPaginationState[key];
 
-        if (!rows || rows.length === 0) {
+        state.rows = rows || [];
+
+        if (resetPage) {
+            state.page = 0;
+        }
+
+        const total = state.rows.length;
+
+        if (!total) {
             tbody.innerHTML = '';
             emptyBox.style.display = 'block';
+            if (nextBtn) nextBtn.disabled = true;
+            updateReportPageStatus(statusId, 0, 0, 0);
             return;
         }
 
         emptyBox.style.display = 'none';
-        tbody.innerHTML = rows.map(row => `
+        const totalPages = Math.ceil(total / REPORT_PAGE_SIZE);
+        if (state.page >= totalPages) state.page = 0;
+
+        const start = state.page * REPORT_PAGE_SIZE;
+        const end = Math.min(start + REPORT_PAGE_SIZE, total);
+        const pageRows = state.rows.slice(start, end);
+
+        tbody.innerHTML = pageRows.map(row => `
             <tr>
-                ${columns.map(key => `<td>${escapeHtml(row[key] ?? 'N/A')}</td>`).join('')}
+                ${columns.map(col => `<td>${escapeHtml(row[col] ?? 'N/A')}</td>`).join('')}
             </tr>
         `).join('');
+
+        if (nextBtn) {
+            nextBtn.disabled = total <= REPORT_PAGE_SIZE;
+        }
+        updateReportPageStatus(statusId, start + 1, end, total);
+    }
+
+    function attachReportNextButton(key, configBuilder) {
+        const btn = document.getElementById(configBuilder().nextBtnId);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const state = reportPaginationState[key];
+            const totalPages = Math.ceil((state.rows.length || 0) / REPORT_PAGE_SIZE);
+            if (totalPages <= 1) return;
+            state.page = (state.page + 1) % totalPages;
+            renderPaginatedReportRows(configBuilder(false));
+        });
     }
 
     function buildQuery1ReportRows(elements) {
@@ -964,13 +1035,17 @@
             .sort((a, b) => a.player.localeCompare(b.player) || a.team.localeCompare(b.team));
     }
 
-    function updateQuery1Report(elements) {
-        renderSimpleReportRows(
-            'query1-report-body',
-            'query1-report-empty',
-            buildQuery1ReportRows(elements),
-            ['player', 'team']
-        );
+    function updateQuery1Report(elements, resetPage = true) {
+        renderPaginatedReportRows({
+            key: 'query1',
+            tbodyId: 'query1-report-body',
+            emptyId: 'query1-report-empty',
+            statusId: 'query1-report-page-status',
+            nextBtnId: 'query1-report-next',
+            rows: buildQuery1ReportRows(elements),
+            columns: ['player', 'team'],
+            resetPage
+        });
     }
 
     function buildQuery2ReportRows(elements, modeLabel, threshold) {
@@ -985,13 +1060,17 @@
             .sort((a, b) => a.team.localeCompare(b.team));
     }
 
-    function updateQuery2Report(elements, modeLabel, threshold) {
-        renderSimpleReportRows(
-            'query2-report-body',
-            'query2-report-empty',
-            buildQuery2ReportRows(elements, modeLabel, threshold),
-            ['team', 'qualifying_tournaments', 'threshold', 'mode']
-        );
+    function updateQuery2Report(elements, modeLabel, threshold, resetPage = true) {
+        renderPaginatedReportRows({
+            key: 'query2',
+            tbodyId: 'query2-report-body',
+            emptyId: 'query2-report-empty',
+            statusId: 'query2-report-page-status',
+            nextBtnId: 'query2-report-next',
+            rows: buildQuery2ReportRows(elements, modeLabel, threshold),
+            columns: ['team', 'qualifying_tournaments', 'threshold', 'mode'],
+            resetPage
+        });
     }
 
     function buildQuery3ReportRows(elements) {
@@ -1020,14 +1099,51 @@
             .sort((a, b) => a.tournament.localeCompare(b.tournament));
     }
 
-    function updateQuery3Report(elements) {
-        renderSimpleReportRows(
-            'query3-report-body',
-            'query3-report-empty',
-            buildQuery3ReportRows(elements),
-            ['tournament', 'prize_pool', 'connected_teams']
-        );
+    function updateQuery3Report(elements, resetPage = true) {
+        renderPaginatedReportRows({
+            key: 'query3',
+            tbodyId: 'query3-report-body',
+            emptyId: 'query3-report-empty',
+            statusId: 'query3-report-page-status',
+            nextBtnId: 'query3-report-next',
+            rows: buildQuery3ReportRows(elements),
+            columns: ['tournament', 'prize_pool', 'connected_teams'],
+            resetPage
+        });
     }
+
+    attachReportNextButton('query1', (resetPage = false) => ({
+        key: 'query1',
+        tbodyId: 'query1-report-body',
+        emptyId: 'query1-report-empty',
+        statusId: 'query1-report-page-status',
+        nextBtnId: 'query1-report-next',
+        rows: reportPaginationState.query1.rows,
+        columns: ['player', 'team'],
+        resetPage
+    }));
+
+    attachReportNextButton('query2', (resetPage = false) => ({
+        key: 'query2',
+        tbodyId: 'query2-report-body',
+        emptyId: 'query2-report-empty',
+        statusId: 'query2-report-page-status',
+        nextBtnId: 'query2-report-next',
+        rows: reportPaginationState.query2.rows,
+        columns: ['team', 'qualifying_tournaments', 'threshold', 'mode'],
+        resetPage
+    }));
+
+    attachReportNextButton('query3', (resetPage = false) => ({
+        key: 'query3',
+        tbodyId: 'query3-report-body',
+        emptyId: 'query3-report-empty',
+        statusId: 'query3-report-page-status',
+        nextBtnId: 'query3-report-next',
+        rows: reportPaginationState.query3.rows,
+        columns: ['tournament', 'prize_pool', 'connected_teams'],
+        resetPage
+    }));
 
     // QUERY 1
     let query1Cy = null;
