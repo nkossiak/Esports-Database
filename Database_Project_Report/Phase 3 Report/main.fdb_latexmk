@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1777342837.48886 "main.aux" "main.bbl" "main" 1777343312.23755 0
+["bibtex main"] 1777342837.48886 "main.aux" "main.bbl" "main" 1777343398.95738 0
   "./references.bib" 1777295500 704 eb20e2971cd8bd0390e7095b575f13f2 ""
   "C:/Users/User/AppData/Local/Programs/MiKTeX/bibtex/bst/acmart/ACM-Reference-Format.bst" 1756554152 93560 12e0ced1522ea2bfa9b2fb12855c7e9e ""
-  "main.aux" 1777342841 4376 27f6e170489283e79136122926b87297 "pdflatex"
+  "main.aux" 1777343396 4376 27f6e170489283e79136122926b87297 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1777343311.44814 "c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/Phase 3 Report/main.tex" "main.pdf" "main" 1777343312.23851 2
+["pdflatex"] 1777343390.91983 "c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/Phase 3 Report/main.tex" "main.pdf" "main" 1777343398.96061 0
   "C:/Users/User/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1777342156 186066 c797610d3c7aadc509276bf4bcd8a24b ""
   "C:/Users/User/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1777343310 13333003 a0365cabe52622c2d891c9ef7b323f65 ""
   "C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/inconsolata/i4-t1-4.enc" 1557958141 7693 0f2dce6d313c82989ec3a67fc24df2a0 ""
@@ -194,12 +194,13 @@
   "images/ESports-Teams.png" 1777295502 78147 3f93e0f913ffdfc83cbd3b534bb37aee ""
   "images/ESports-Tournaments.png" 1777295502 132653 903fcb345658ded3cf7508ad1be2c808 ""
   "images/UpdatedERDiagram.png" 1777295502 64455 2eb143156c83dbe4f2386310d1b2067d ""
-  "main.aux" 1777342841 4376 27f6e170489283e79136122926b87297 "pdflatex"
+  "main.aux" 1777343396 4376 27f6e170489283e79136122926b87297 "pdflatex"
   "main.bbl" 1777342837 2864 df12b1f03f2221cbeb349f103e78ba7b "bibtex main"
-  "main.out" 1777342841 2259 2439b9e680ea151e0b488609a2a180c7 ""
+  "main.out" 1777343396 2259 2439b9e680ea151e0b488609a2a180c7 "pdflatex"
   "main.tex" 1777343288 23290 1386f3a1473b253d54ed4aa03a32279b ""
   (generated)
   "main.aux"
   "main.log"
+  "main.out"
   "main.pdf"
   (rewritten before read)

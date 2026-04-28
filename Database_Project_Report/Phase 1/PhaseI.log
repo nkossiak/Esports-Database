@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.4.26)  26 APR 2026 21:37
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.4.27)  27 APR 2026 19:30
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/PhaseI.tex
-(c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/PhaseI.tex
+**"c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/Phase 1/PhaseI.tex"
+(c:/Users/User/Documents/GitHub/Esports-Database/Database_Project_Report/Phase 1/PhaseI.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
 (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/acmart\acmart.cls
@@ -941,12 +941,12 @@ Package rerunfilecheck Info: File `PhaseI.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  21001 strings out of 467871
- 341817 string characters out of 5418860
+ 341895 string characters out of 5418860
  835523 words of memory out of 5000000
  49085 multiletter control sequences out of 15000+600000
  762629 words of font info for 275 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,12n,131p,1075b,617s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,131p,1085b,617s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumT.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumTB.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineT.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTB.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTI.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/newtx/txsys.pfb>
 Output written on PhaseI.pdf (2 pages, 498922 bytes).
 PDF statistics:
