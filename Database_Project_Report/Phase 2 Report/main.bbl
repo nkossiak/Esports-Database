@@ -1,0 +1,64 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{2}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Microsoft(2020)]%
+        {playwright_python}
+\bibfield{author}{\bibinfo{person}{Microsoft}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{Playwright for Python}.
+\newblock
+  \bibinfo{howpublished}{\url{https://github.com/microsoft/playwright-python}}.
+\newblock
+
+
+\bibitem[Shannon et~al\mbox{.}(2003)]%
+        {Shannon2003Cytoscape}
+\bibfield{author}{\bibinfo{person}{Paul Shannon}, \bibinfo{person}{Andrew
+  Markiel}, \bibinfo{person}{Owen Ozier}, \bibinfo{person}{Nitin~S. Baliga},
+  \bibinfo{person}{Jonathan~T. Wang}, \bibinfo{person}{Daniel Ramage},
+  \bibinfo{person}{Nada Amin}, \bibinfo{person}{Benno Schwikowski}, {and}
+  \bibinfo{person}{Trey Ideker}.} \bibinfo{year}{2003}\natexlab{}.
+\newblock \showarticletitle{Cytoscape: A Software Environment for Integrated
+  Models of Biomolecular Interaction Networks}.
+\newblock \bibinfo{journal}{\emph{Genome Research}} \bibinfo{volume}{13},
+  \bibinfo{number}{11} (\bibinfo{year}{2003}), \bibinfo{pages}{2498--2504}.
+\newblock
+\href{https://doi.org/10.1101/gr.1239303}{doi:\nolinkurl{10.1101/gr.1239303}}
+
+
+\end{thebibliography}
