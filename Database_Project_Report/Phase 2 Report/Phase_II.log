@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.27)  27 APR 2026 19:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.27)  27 APR 2026 19:48
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"d:/Esports-Database/Database_Project_Report/Phase 3 Report/main.tex"
-(d:/Esports-Database/Database_Project_Report/Phase 3 Report/main.tex
+**"d:/Esports-Database/Database_Project_Report/Phase 2 Report/Phase_II.tex"
+(d:/Esports-Database/Database_Project_Report/Phase 2 Report/Phase_II.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
 (C:\Users\brand\AppData\Local\Programs\MiKTeX\tex/latex/acmart\acmart.cls
@@ -595,22 +595,7 @@ Package: balance 1999/02/23 4.3 (PWD)
 ) Excluding comment 'screenonly' Include comment 'printonly' Include comment 'anonsuppress' (C:\Users\brand\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count335
-) (main.aux
-
-LaTeX Warning: Label `fig:placeholder' multiply defined.
-
-
-LaTeX Warning: Label `fig:placeholder' multiply defined.
-
-
-LaTeX Warning: Label `fig:placeholder' multiply defined.
-
-
-LaTeX Warning: Label `fig:placeholder' multiply defined.
-
-
-LaTeX Warning: Label `fig:placeholder' multiply defined.
-
+) (Phase_II.aux
 
 LaTeX Warning: Label `fig:placeholder' multiply defined.
 
@@ -618,7 +603,7 @@ LaTeX Warning: Label `fig:placeholder' multiply defined.
 LaTeX Warning: Label `fig:placeholder' multiply defined.
 
 )
-\openout1 = `main.aux'.
+\openout1 = `Phase_II.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/nxlmi/m/it on input line 114.
 LaTeX Font Info:    Trying to load font information for OML+nxlmi on input line 114.
@@ -742,9 +727,9 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 Package hyperref Info: Link coloring OFF on input line 114.
- (main.out) (main.out)
+ (Phase_II.out) (Phase_II.out)
 \@outlinefile=\write4
-\openout4 = `main.out'.
+\openout4 = `Phase_II.out'.
 
  (C:\Users\brand\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -914,7 +899,7 @@ LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
 (Font)              scaled to size 6.0pt on input line 199.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 9.0pt on input line 202.
-<images/ERDiagram.png, id=77, 713.66624pt x 232.87pt>
+<images/ERDiagram.png, id=65, 713.66624pt x 232.87pt>
 File: images/ERDiagram.png Graphic file (type png)
 <use images/ERDiagram.png>
 Package pdftex.def Info: images/ERDiagram.png  used on input line 210.
@@ -928,7 +913,7 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
  [1.1{C:/Users/brand/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_25tcsq.enc}{C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_76gpa5.enc}
 
 {C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_nh77jq.enc}{C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_naooyc.enc}{C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_7grukw.enc}]
-<images/UpdatedERDiagram.png, id=94, 593.21625pt x 312.16624pt>
+<images/UpdatedERDiagram.png, id=82, 593.21625pt x 312.16624pt>
 File: images/UpdatedERDiagram.png Graphic file (type png)
 <use images/UpdatedERDiagram.png>
 Package pdftex.def Info: images/UpdatedERDiagram.png  used on input line 221.
@@ -940,175 +925,58 @@ Class acmart Warning: A possible image without description on input line 224.
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
-<images/ESports-Players.png, id=95, 1444.64719pt x 683.55376pt>
-File: images/ESports-Players.png Graphic file (type png)
-<use images/ESports-Players.png>
-Package pdftex.def Info: images/ESports-Players.png  used on input line 248.
-(pdftex.def)             Requested size: 241.14749pt x 114.0957pt.
-<images/ESports-Teams.png, id=96, 1442.38875pt x 683.55376pt>
-File: images/ESports-Teams.png Graphic file (type png)
-<use images/ESports-Teams.png>
-Package pdftex.def Info: images/ESports-Teams.png  used on input line 249.
-(pdftex.def)             Requested size: 241.14749pt x 114.27301pt.
-<images/ESports-Tournaments.png, id=97, 1444.64719pt x 685.05937pt>
-File: images/ESports-Tournaments.png Graphic file (type png)
-<use images/ESports-Tournaments.png>
-Package pdftex.def Info: images/ESports-Tournaments.png  used on input line 250.
-(pdftex.def)             Requested size: 241.14749pt x 114.34702pt.
-<images/ESports-PlayedIn.png, id=98, 1444.64719pt x 682.80093pt>
-File: images/ESports-PlayedIn.png Graphic file (type png)
-<use images/ESports-PlayedIn.png>
-Package pdftex.def Info: images/ESports-PlayedIn.png  used on input line 251.
-(pdftex.def)             Requested size: 241.14749pt x 113.97005pt.
-
-
-Class acmart Warning: A possible image without description on input line 253.
-
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 253.
+(Font)              scaled to size 9.0pt on input line 246.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 7.0pt on input line 253.
-[2.2 <./images/ERDiagram.png> <./images/UpdatedERDiagram.png>]
-<images/ESports-PlaysFor.png, id=112, 1444.64719pt x 683.55376pt>
-File: images/ESports-PlaysFor.png Graphic file (type png)
-<use images/ESports-PlaysFor.png>
-Package pdftex.def Info: images/ESports-PlaysFor.png  used on input line 256.
-(pdftex.def)             Requested size: 241.14749pt x 114.0957pt.
-
-
-Class acmart Warning: A possible image without description on input line 259.
-
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-<images/ESports-Reports.png, id=113, 1444.64719pt x 680.5425pt>
+(Font)              scaled to size 7.0pt on input line 246.
+ [2.2 <./images/ERDiagram.png> <./images/UpdatedERDiagram.png>]
+<images/ESports-Reports.png, id=96, 1444.64719pt x 680.5425pt>
 File: images/ESports-Reports.png Graphic file (type png)
 <use images/ESports-Reports.png>
-Package pdftex.def Info: images/ESports-Reports.png  used on input line 265.
+Package pdftex.def Info: images/ESports-Reports.png  used on input line 252.
 (pdftex.def)             Requested size: 241.14749pt x 113.59308pt.
-<images/ESports-ReportsExample.png, id=114, 1444.64719pt x 689.57625pt>
+<images/ESports-ReportsExample.png, id=97, 1444.64719pt x 689.57625pt>
 File: images/ESports-ReportsExample.png Graphic file (type png)
 <use images/ESports-ReportsExample.png>
-Package pdftex.def Info: images/ESports-ReportsExample.png  used on input line 266.
+Package pdftex.def Info: images/ESports-ReportsExample.png  used on input line 253.
 (pdftex.def)             Requested size: 241.14749pt x 115.10095pt.
 
 
-Class acmart Warning: A possible image without description on input line 269.
-
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 275.
-(C:\Users\brand\AppData\Local\Programs\MiKTeX\tex/latex/inconsolata\t1zi4.fd
-File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
-)
-LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 275.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `zi4' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-
-Overfull \hbox (12.33717pt too wide) in paragraph at lines 288--288
-[]\T1/zi4/m/n/9 SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes[] 
- []
-
-
-Package fancyhdr Warning: \headheight is too small (13.0pt): 
-(fancyhdr)                Make it at least 15.45749pt, for example:
-(fancyhdr)                \setlength{\headheight}{15.45749pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-2.45749pt}.
-
-[3.3 <./images/ESports-Players.png> <./images/ESports-Teams.png> <./images/ESports-Tournaments.png> <./images/ESports-PlayedIn.png> <./images/ESports-PlaysFor.png> <./images/ESports-Reports.png> <./images/ESports-ReportsExample.png>]
-Overfull \hbox (9.34024pt too wide) in paragraph at lines 288--288
-[]\T1/zi4/m/n/9 SELECT DISTINCT e.EdgeID, e.SourceNodeID, e.TargetNodeID,[] 
- []
-
-<images/ESports-Q1.png, id=129, 1444.64719pt x 685.8122pt>
-File: images/ESports-Q1.png Graphic file (type png)
-<use images/ESports-Q1.png>
-Package pdftex.def Info: images/ESports-Q1.png  used on input line 292.
-(pdftex.def)             Requested size: 241.14749pt x 114.47267pt.
-<images/ESports-Q1Example.png, id=130, 1444.64719pt x 686.565pt>
-File: images/ESports-Q1Example.png Graphic file (type png)
-<use images/ESports-Q1Example.png>
-Package pdftex.def Info: images/ESports-Q1Example.png  used on input line 293.
-(pdftex.def)             Requested size: 241.14749pt x 114.59833pt.
-
-Class acmart Warning: A possible image without description on input line 296.
-
-<images/ESports-Q2.png, id=131, 1440.88312pt x 687.31781pt>
-File: images/ESports-Q2.png Graphic file (type png)
-<use images/ESports-Q2.png>
-Package pdftex.def Info: images/ESports-Q2.png  used on input line 333.
-(pdftex.def)             Requested size: 241.14749pt x 115.02812pt.
-<images/ESports-Q2Example1.png, id=132, 1442.38875pt x 679.03688pt>
-File: images/ESports-Q2Example1.png Graphic file (type png)
-<use images/ESports-Q2Example1.png>
-Package pdftex.def Info: images/ESports-Q2Example1.png  used on input line 334.
-(pdftex.def)             Requested size: 241.14749pt x 113.5179pt.
-<images/ESports-Q2Example2.png, id=133, 1444.64719pt x 679.78969pt>
-File: images/ESports-Q2Example2.png Graphic file (type png)
-<use images/ESports-Q2Example2.png>
-Package pdftex.def Info: images/ESports-Q2Example2.png  used on input line 335.
-(pdftex.def)             Requested size: 241.14749pt x 113.46742pt.
-
-Class acmart Warning: A possible image without description on input line 338.
-
-[4.4{C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/inconsolata/i4-t1-4.enc} <./images/ESports-Q1.png> <./images/ESports-Q1Example.png> <./images/ESports-Q2.png> <./images/ESports-Q2Example1.png> <./images/ESports-Q2Example2.png>]
-Overfull \hbox (12.33717pt too wide) in paragraph at lines 367--367
-[]\T1/zi4/m/n/9 SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes[] 
- []
-
-
-Overfull \hbox (12.33717pt too wide) in paragraph at lines 367--367
-[]\T1/zi4/m/n/9 SELECT DISTINCT n.NodeID, n.Name, n.NodeType, n.Attributes[] 
- []
-
-
-Overfull \hbox (9.34024pt too wide) in paragraph at lines 367--367
-[]\T1/zi4/m/n/9 SELECT DISTINCT e.EdgeID, e.SourceNodeID, e.TargetNodeID,[] 
- []
-
-<images/ESports-Q3.png, id=146, 1444.64719pt x 681.29532pt>
-File: images/ESports-Q3.png Graphic file (type png)
-<use images/ESports-Q3.png>
-Package pdftex.def Info: images/ESports-Q3.png  used on input line 371.
-(pdftex.def)             Requested size: 241.14749pt x 113.71873pt.
-
-Class acmart Warning: A possible image without description on input line 374.
+Class acmart Warning: A possible image without description on input line 256.
 
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
+(Font)              scaled to size 6.6pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 9.0pt on input line 379.
+(Font)              scaled to size 9.0pt on input line 261.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 6.6pt on input line 379.
-(main.bbl)
+(Font)              scaled to size 6.6pt on input line 261.
+(Phase_II.bbl)
 
 Class acmart Warning: Some images may lack descriptions.
 (acmart)              ACM is committed to complying with the upcoming US ADA https://accessiblyapp.com/accessibility-compliance/ada/ and European Accessibility Act (EAA) https://accessiblyapp.com/accessibility-compliance/eaa/ regulations by actively working to ensure our publications and application services are accessible to individuals with disabilities, adhering to the WCAG guidelines to provide a seamless experience for all users, and regularly reviewing our accessibility practices to maintain compliance with evolving standards. 
@@ -1129,7 +997,7 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 ) (C:\Users\brand\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [5.5 <./images/ESports-Q3.png>] (main.aux)
+) [3.3 <./images/ESports-Reports.png> <./images/ESports-ReportsExample.png>] (Phase_II.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
@@ -1138,21 +1006,21 @@ L3 programming layer <2026-03-20>
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 2439B9E680EA151E0B488609A2A180C7;2259.
+Package rerunfilecheck Info: File `Phase_II.out' has not changed.
+(rerunfilecheck)             Checksum: E9F251C21FDE36BBD732A855CC8892CE;1901.
  ) 
 Here is how much of TeX's memory you used:
- 21260 strings out of 467691
- 348704 string characters out of 5414987
- 841562 words of memory out of 5000000
- 49426 multiletter control sequences out of 15000+600000
- 774858 words of font info for 333 fonts, out of 8000000 for 9000
+ 21134 strings out of 467691
+ 345369 string characters out of 5414987
+ 840590 words of memory out of 5000000
+ 49323 multiletter control sequences out of 15000+600000
+ 773743 words of font info for 327 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,12n,131p,1369b,767s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumT.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumTB.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineT.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTB.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTI.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/newtx/txsys.pfb>
-Output written on main.pdf (5 pages, 2534380 bytes).
+ 90i,12n,131p,1373b,611s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumT.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinBiolinumTB.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineT.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTB.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTI.pfb><C:/Users/brand/AppData/Local/Programs/MiKTeX/fonts/type1/public/newtx/txsys.pfb>
+Output written on Phase_II.pdf (3 pages, 1043339 bytes).
 PDF statistics:
- 210 PDF objects out of 1000 (max. 8388607)
- 41 named destinations out of 1000 (max. 500000)
- 82660 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 155 PDF objects out of 1000 (max. 8388607)
+ 31 named destinations out of 1000 (max. 500000)
+ 82069 words of extra memory for PDF output out of 89155 (max. 10000000)
 
