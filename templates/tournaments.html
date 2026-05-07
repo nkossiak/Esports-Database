@@ -1,22 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="page-header">
-        <h2>Tournaments</h2>
-        <span class="page-chip">Add New Entry</span>
+
+    <div class="card" style="background: #000000; border: 1px solid #000000; margin-bottom: 30px; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-top: 0; color: #33285b;">Add New Tournament</h3>
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px;">
+                <input name="name" placeholder="Tournament Name" required style="width: 100%;">
+                <input name="country" placeholder="Location" style="width: 100%;">
+                <input name="founded_year" placeholder="Year" style="width: 100%;">
+                <input name="prize_pool" placeholder="Prize (e.g. $250,000)" style="width: 100%;">
+            </div>
+            <button type="submit" style="background: #33285b; color: white; border: none; padding: 10px 20px; margin-top: 15px; border-radius: 4px; cursor: pointer;">
+                Add Tournament
+            </button>
+        </form>
     </div>
 
-    <form method="POST">
-        <div class="input-row">
-            <input name="name" placeholder="Tournament Name" required>
-            <input name="country" placeholder="Location">
-            <input name="founded_year" placeholder="Year">
-            <input name="prize_pool" placeholder="Prize (e.g. $250,000)">
-        </div>
-        <button type="submit">Add Tournament</button>
-    </form>
-
-    <hr style="border: 0; border-top: 1px solid var(--line); margin: 24px 0;">
+    <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 24px;">
 
     <table>
         <thead>
@@ -32,8 +33,8 @@
             {% for tournament in tournaments %}
             <tr>
                 <td>
-                    <div style="color: #ebe5ff; font-weight: 600;">{{ tournament.Name }}</div>
-                </td>
+                    <div style="color: #ebe5ff;">{{ tournament.Name }}</div>
+                    </td>
                 <td>{{ tournament.attr.get('country', 'Online') }}</td>
                 <td>{{ tournament.attr.get('year', 'N/A') }}</td>
                 <td style="color: #7affd7; font-weight: bold;">
@@ -41,18 +42,19 @@
                 </td>
                 <td style="text-align: center;">
                     <a href="/tournament/{{ tournament.NodeID }}" 
-                       style="text-decoration: none; background: var(--accent-soft); color: var(--accent); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--accent); font-size: 0.84rem; display: inline-block;">
+                       style="text-decoration: none; background: #eef2ff; color: #33285b; padding: 6px 12px; border-radius: 4px; border: 1px solid #33285b; font-size: 0.84rem; display: inline-block;">
                         View Results
                     </a>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" style="text-align: center; color: var(--muted); padding: 24px;">
+                <td colspan="5" style="text-align: center; color: #777; padding: 24px;">
                     No tournaments found in the database.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
 {% endblock %}
