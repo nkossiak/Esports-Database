@@ -5,107 +5,248 @@ import re
 import os
 from playwright.sync_api import sync_playwright
 
-# Tiers to scrape
-TARGET_URLS = [
-    "https://liquipedia.net/valorant/S-Tier_Tournaments",
-    "https://liquipedia.net/valorant/A-Tier_Tournaments"
-]
+TARGET_URLS = {
+    "Valorant": "https://liquipedia.net/valorant/S-Tier_Tournaments",
+    "Fortnite": "https://liquipedia.net/fortnite/S-Tier_Tournaments",
+    "Dota2": "https://liquipedia.net/dota2/Tier_1_Tournaments",
+    "CounterStrike": "https://liquipedia.net/counterstrike/S-Tier_Tournaments",
+    "RainbowSix": "https://liquipedia.net/rainbowsix/S-Tier_Tournaments",
+    "PUBG": "https://liquipedia.net/pubg/S-Tier_Tournaments",
+    "ApexLegends": "https://liquipedia.net/apexlegends/S-Tier_Tournaments",
+    "RocketLeague": "https://liquipedia.net/rocketleague/S-Tier_Tournaments",
+    "LeagueOfLegends": "https://liquipedia.net/leagueoflegends/S-Tier_Tournaments"
+}
+
+DB_NAME = "esports.db"
 
 def get_db_connection():
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_dir, 'esports.db')
+    db_path = os.path.join(base_dir, DB_NAME)
+
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+
     return conn
 
-def scrape_everything():
+def clean_text(text):
+
+    return " ".join(text.split()).strip()
+
+def is_future_tournament(winner_text):
+
+    bad_words = ["TBD", "TBA"]
+
+    for word in bad_words:
+        if word in winner_text:
+            return True
+
+    return False
+
+def scrape_tournaments():
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+
+        browser = p.chromium.launch(
+            headless=False
         )
+
+        context = browser.new_context(
+            viewport={"width": 1600, "height": 1200}
+        )
+
         page = context.new_page()
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        for main_url in TARGET_URLS:
-            tier = "S-Tier" if "S-Tier" in main_url else "A-Tier"
-            print(f"\n=== SCRAPING {tier} LIST ===")
-            page.goto(main_url, wait_until="networkidle")
-            time.sleep(2)
+        for game_name, url in TARGET_URLS.items():
 
-            rows = page.locator("tr").all()
+            print("\n==============================")
+            print(f"SCRAPING {game_name}")
+            print("==============================")
+
+            page.goto(
+                url,
+                wait_until="networkidle",
+                timeout=60000
+            )
+
+            time.sleep(4)
+
+            rows = page.locator(
+                "tr.table2__row--body"
+            ).all()
+
+            print(f"Found {len(rows)} total rows.")
+
+            inserted_count = 0
+
             for row in rows:
-                cells = row.locator("td").all()
-                if len(cells) < 4: continue
 
-                # Extract Tournament Name and Link
-                name_cell = cells[1]
-                name = name_cell.inner_text().split('\n')[0].strip()
-                link_el = name_cell.locator("a").first
-                
-                if not any(k in name for k in ["VALORANT", "VCT", "Masters", "Champions", "Evolution", "Clash"]):
-                    continue
+                try:
 
-                # Metadata Extraction
-                texts = [c.inner_text().strip() for c in cells]
-                prize = next((t for t in texts if "$" in t), "TBD")
-                year_match = re.search(r'(202\d)', " ".join(texts))
-                year = year_match.group(1) if year_match else "2026"
-                
-                # Location Logic
-                location = "Online"
-                pots = [texts[4] if len(texts)>4 else None, texts[3] if len(texts)>3 else None]
-                for p_loc in pots:
-                    if p_loc and "$" not in p_loc and year not in p_loc and len(p_loc) > 1:
-                        location = p_loc.split('\n')[0].strip(); break
+                    # ONLY HIGHLIGHTED TOURNAMENTS
+                    row_class = row.get_attribute("class")
 
-                print(f"\nProcessing: {name}")
+                    if not row_class:
+                        continue
 
-                # Sync Tournament Node
-                attr = json.dumps({"country": location, "year": year, "prize_pool": prize, "tier": tier})
-                cursor.execute('INSERT OR IGNORE INTO Nodes (NodeType, Name, Attributes) VALUES ("Tournament", ?, ?)', (name, attr))
-                cursor.execute('UPDATE Nodes SET Attributes = ? WHERE Name = ? AND NodeType = "Tournament"', (attr, name))
-                t_id = conn.execute('SELECT NodeID FROM Nodes WHERE Name = ? AND NodeType = "Tournament"', (name,)).fetchone()[0]
+                    if "table2__row--highlighted" not in row_class:
+                        continue
 
-                # --- PARTICIPANT DRILL DOWN ---
-                if link_el.count() > 0:
-                    tourney_url = "https://liquipedia.net" + link_el.get_attribute("href")
-                    sub_page = context.new_page()
+                    # TOURNAMENT NAME
+                    tournament_link = row.locator(
+                        "td.column__tournament a"
+                    ).first
+
+                    if tournament_link.count() == 0:
+                        continue
+
+                    tournament_name = clean_text(
+                        tournament_link.inner_text()
+                    )
+
+                    if not tournament_name:
+                        continue
+
+                    href = tournament_link.get_attribute("href")
+
+                    if not href:
+                        continue
+
+                    tournament_url = (
+                        "https://liquipedia.net" + href
+                    )
+
+                    # DATE
+                    date = "Unknown"
+
                     try:
-                        sub_page.goto(tourney_url, wait_until="networkidle", timeout=30000)
-                        
-                        # Use the working selectors from your dry run
-                        elements = sub_page.locator(".teamcard, .teamcard-inner").locator("b a").all()
-                        if not elements:
-                            elements = sub_page.locator(".team-template-text a").all()
+                        date = clean_text(
+                            row.locator("td").nth(2).inner_text()
+                        )
+                    except:
+                        pass
 
-                        found_teams = set()
-                        for el in elements:
-                            team_name = el.inner_text().strip()
-                            # Filter noise and short abbreviations (C9, SEN, etc) to prevent duplicates
-                            if not team_name or len(team_name) <= 3 or team_name in ["TBD", "TBA"]:
-                                continue
-                            
-                            if team_name in found_teams: continue
-                            found_teams.add(team_name)
+                    # PRIZE POOL
+                    prize_pool = "Unknown"
 
-                            # Sync Team and Edge
-                            cursor.execute('INSERT OR IGNORE INTO Nodes (NodeType, Name, Attributes) VALUES ("Team", ?, ?)', 
-                                         (team_name, json.dumps({'game': 'Valorant'})))
-                            team_id = conn.execute('SELECT NodeID FROM Nodes WHERE Name = ? AND NodeType = "Team"', (team_name,)).fetchone()[0]
-                            cursor.execute('INSERT OR IGNORE INTO Edges (SourceNodeID, TargetNodeID, EdgeType) VALUES (?, ?, "Played_In")', (t_id, team_id))
-                        
-                        print(f"  > Linked {len(found_teams)} teams.")
-                        conn.commit()
-                    except Exception as e:
-                        print(f"  > Error on {name}: {e}")
-                    finally:
-                        sub_page.close()
+                    try:
+                        prize_pool = clean_text(
+                            row.locator("td").nth(3).inner_text()
+                        )
+                    except:
+                        pass
 
-        conn.close()
+                    # LOCATION
+                    location = "Unknown"
+
+                    try:
+                        location = clean_text(
+                            row.locator("td").nth(4).inner_text()
+                        )
+                    except:
+                        pass
+
+                    # WINNER
+                    winner = "Unknown"
+
+                    try:
+                        winner_cell = row.locator(
+                            "td.column__placement"
+                        ).first
+
+                        winner = clean_text(
+                            winner_cell.inner_text()
+                        )
+                    except:
+                        pass
+
+                    # SKIP TBD
+                    if is_future_tournament(winner):
+
+                        print(
+                            f"Skipping future tournament: {tournament_name}"
+                        )
+
+                        continue
+
+                    # YEAR
+                    year_match = re.search(
+                        r"(20\d\d)",
+                        date
+                    )
+
+                    year = (
+                        year_match.group(1)
+                        if year_match
+                        else "Unknown"
+                    )
+
+                    print(f"\nTournament: {tournament_name}")
+                    print(f"Winner: {winner}")
+
+                    # ATTRIBUTES
+                    attributes = {
+                        "game": game_name,
+                        "year": year,
+                        "date": date,
+                        "location": location,
+                        "prize_pool": prize_pool,
+                        "url": tournament_url,
+                        "winner": winner,
+                        "tier": "S-Tier"
+                    }
+
+                    attr_json = json.dumps(attributes)
+
+                    # INSERT TOURNAMENT NODE
+                    cursor.execute(
+                        """
+                        INSERT OR IGNORE INTO Nodes
+                        (NodeType, Name, Attributes)
+                        VALUES (?, ?, ?)
+                        """,
+                        (
+                            "Tournament",
+                            tournament_name,
+                            attr_json
+                        )
+                    )
+
+                    # UPDATE ATTRIBUTES
+                    cursor.execute(
+                        """
+                        UPDATE Nodes
+                        SET Attributes = ?
+                        WHERE Name = ?
+                        AND NodeType = 'Tournament'
+                        """,
+                        (
+                            attr_json,
+                            tournament_name
+                        )
+                    )
+
+                    conn.commit()
+
+                    inserted_count += 1
+
+                except Exception as e:
+
+                    print(f"ROW ERROR: {e}")
+
+            print(f"\nInserted {inserted_count} tournaments.")
+
         browser.close()
-        print("\nAll data synced. Your graph is now fully connected!")
+
+    conn.close()
+
+    print("\n===================================")
+    print("SCRAPING FINISHED")
+    print("===================================")
 
 if __name__ == "__main__":
-    scrape_everything()
+
+    scrape_tournaments()
