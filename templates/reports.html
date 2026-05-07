@@ -412,7 +412,7 @@
                         <div class="legend-item"><span class="legend-swatch tournament"></span> Tournament</div>
                     </div>
                     <div class="legend" style="margin-top: 6px;">
-                        <div class="legend-item">Edges: Plays_For, Played_In, Won_By</div>
+                        <div class="legend-item">Overview: Players, Teams, and Tournaments</div>
                         <div class="legend-item">Total Nodes: {{ counts.nodes }} | Total Edges: {{ counts.edges }}</div>
                     </div>
                 </div>
@@ -817,47 +817,59 @@
     }
 
     // OVERVIEW GRAPH
-    fetch('/api/graph-data/all')
+    // Constellation-style overview: Teams + Tournaments only.
+    // Players and Plays_For edges are NOT included in this overview, so the layout forms readable star clusters.
+    fetch('/api/graph-data/all?component=largest')
         .then(res => res.json())
         .then(data => {
             const rawElements = data.elements || [];
 
-            const edgeElements = rawElements.filter(el => el.data && el.data.source && el.data.target);
-            const connectedIds = new Set();
-            edgeElements.forEach(el => {
-                connectedIds.add(el.data.source);
-                connectedIds.add(el.data.target);
+            const visibleElements = rawElements.filter(el => {
+                const d = el.data || {};
+
+                if (d.type === 'player') {
+                    return false;
+                }
+
+                if (d.edgeType === 'Plays_For') {
+                    return false;
+                }
+
+                return true;
             });
 
-            const nodeElements = rawElements.filter(el => el.data && el.data.id && !el.data.source)
-                .filter(el => connectedIds.has(el.data.id));
+            const visibleNodeIds = new Set(
+                visibleElements
+                    .filter(el => !(el.data.source && el.data.target))
+                    .map(el => el.data.id)
+            );
 
-            const elements = [...nodeElements, ...edgeElements];
+            const cleanElements = visibleElements.filter(el => {
+                const d = el.data || {};
+
+                if (!(d.source && d.target)) {
+                    return true;
+                }
+
+                return visibleNodeIds.has(d.source) && visibleNodeIds.has(d.target);
+            });
 
             const overviewCy = cytoscape({
                 container: document.getElementById('overview-cy'),
-                elements: elements,
+                elements: cleanElements,
+                wheelSensitivity: 0.22,
                 style: [
                     {
                         selector: 'node',
                         style: {
                             'label': '',
                             'text-opacity': 0,
-                            'overlay-padding': 4,
-                            'opacity': 0.96
-                        }
-                    },
-                    {
-                        selector: 'node[type="player"]',
-                        style: {
-                            'shape': 'ellipse',
-                            'background-color': '#7c3aed',
-                            'width': 13,
-                            'height': 13,
+                            'overlay-padding': 7,
                             'border-width': 0,
-                            'shadow-blur': 10,
-                            'shadow-color': '#7c3aed',
-                            'shadow-opacity': 0.38
+                            'opacity': 0.98,
+                            'background-color': '#2563eb',
+                            'shadow-blur': 14,
+                            'shadow-opacity': 0.75
                         }
                     },
                     {
@@ -865,12 +877,11 @@
                         style: {
                             'shape': 'round-rectangle',
                             'background-color': '#2563eb',
-                            'width': 16,
-                            'height': 16,
-                            'border-width': 0,
-                            'shadow-blur': 10,
+                            'width': ele => Math.min(18, 10 + ele.degree() * 0.65),
+                            'height': ele => Math.min(18, 10 + ele.degree() * 0.65),
                             'shadow-color': '#2563eb',
-                            'shadow-opacity': 0.36
+                            'shadow-blur': 16,
+                            'shadow-opacity': 0.82
                         }
                     },
                     {
@@ -878,40 +889,82 @@
                         style: {
                             'shape': 'diamond',
                             'background-color': '#06b6d4',
-                            'width': 15,
-                            'height': 15,
-                            'border-width': 0,
-                            'shadow-blur': 10,
+                            'width': ele => Math.min(14, 8 + ele.degree() * 0.38),
+                            'height': ele => Math.min(14, 8 + ele.degree() * 0.38),
                             'shadow-color': '#06b6d4',
-                            'shadow-opacity': 0.36
+                            'shadow-blur': 15,
+                            'shadow-opacity': 0.78
                         }
                     },
                     {
                         selector: 'edge',
                         style: {
-                            'curve-style': 'haystack',
-                            'width': 1.2,
+                            'curve-style': 'straight',
+                            'width': 1.05,
                             'line-fill': 'linear-gradient',
-                            'line-gradient-stop-colors': '#a855f7 #3b82f6 #06b6d4',
-                            'line-gradient-stop-positions': '0 55 100',
-                            'opacity': 0.50,
+                            'line-gradient-stop-colors': '#7c3aed #2563eb #06b6d4',
+                            'line-gradient-stop-positions': '0% 55% 100%',
+                            'opacity': 0.34,
                             'target-arrow-shape': 'none'
+                        }
+                    },
+                    {
+                        selector: 'edge[edgeType="Played_In"]',
+                        style: {
+                            'width': 1.05,
+                            'opacity': 0.34,
+                            'line-gradient-stop-colors': '#7c3aed #2563eb #06b6d4'
+                        }
+                    },
+                    {
+                        selector: 'edge[edgeType="Won_By"]',
+                        style: {
+                            'width': 1.35,
+                            'opacity': 0.55,
+                            'line-gradient-stop-colors': '#a855f7 #7c3aed #06b6d4'
+                        }
+                    },
+                    {
+                        selector: 'node:selected',
+                        style: {
+                            'label': 'data(label)',
+                            'text-opacity': 1,
+                            'font-family': 'Exo 2, sans-serif',
+                            'font-size': 9,
+                            'font-weight': 600,
+                            'color': '#f8fafc',
+                            'text-valign': 'bottom',
+                            'text-halign': 'center',
+                            'text-margin-y': 7,
+                            'text-outline-width': 2,
+                            'text-outline-color': '#05060a',
+                            'z-index': 999
                         }
                     },
                     {
                         selector: '.faded',
                         style: {
-                            'opacity': 0.06,
-                            'text-opacity': 0.05
+                            'opacity': 0.045,
+                            'text-opacity': 0
                         }
                     },
                     {
                         selector: '.highlighted',
                         style: {
                             'opacity': 1,
-                            'width': 2.1,
-                            'line-fill': 'linear-gradient',
-                            'line-gradient-stop-colors': '#c026d3 #7c3aed #06b6d4'
+                            'line-color': '#a855f7',
+                            'width': 1.8,
+                            'z-index': 999
+                        }
+                    },
+                    {
+                        selector: 'node.highlighted',
+                        style: {
+                            'border-width': 1.4,
+                            'border-color': '#dbeafe',
+                            'shadow-blur': 24,
+                            'shadow-opacity': 0.95,
+                            'z-index': 999
                         }
                     }
                 ],
@@ -919,22 +972,59 @@
                     name: 'cose',
                     animate: false,
                     fit: true,
-                    padding: 28,
-                    nodeRepulsion: 220000,
-                    idealEdgeLength: 58,
-                    edgeElasticity: 80,
-                    gravity: 0.12,
-                    componentSpacing: 140,
-                    nodeOverlap: 180,
-                    nestingFactor: 0.9,
-                    numIter: 2200,
-                    initialTemp: 180,
-                    coolingFactor: 0.96,
-                    minTemp: 1.0
+                    padding: 52,
+                    randomize: true,
+                    nodeRepulsion: 260000,
+                    idealEdgeLength: 92,
+                    edgeElasticity: 58,
+                    gravity: 0.032,
+                    componentSpacing: 190,
+                    nodeOverlap: 18,
+                    nestingFactor: 1.15,
+                    numIter: 5600,
+                    initialTemp: 235,
+                    coolingFactor: 0.955,
+                    minTemp: 0.7
                 }
             });
 
+            overviewCy.ready(() => {
+                overviewCy.fit(overviewCy.elements(), 52);
+                overviewCy.center();
+            });
+
             attachNodeInfo(overviewCy, 'overview-info-panel');
+
+            function clearOverviewFocus() {
+                overviewCy.elements().removeClass('faded highlighted');
+                overviewCy.nodes().unselect();
+            }
+
+            function focusNeighborhood(node) {
+                const neighborhood = node.closedNeighborhood();
+                overviewCy.elements().addClass('faded');
+                neighborhood.removeClass('faded').addClass('highlighted');
+                node.select();
+            }
+
+            overviewCy.on('mouseover', 'node', function(evt) {
+                focusNeighborhood(evt.target);
+            });
+
+            overviewCy.on('mouseout', 'node', function() {
+                clearOverviewFocus();
+            });
+
+            overviewCy.on('tap', 'node', function(evt) {
+                focusNeighborhood(evt.target);
+            });
+
+            overviewCy.on('tap', function(evt) {
+                if (evt.target === overviewCy) {
+                    clearOverviewFocus();
+                    buildInfoPanel(null, 'overview-info-panel');
+                }
+            });
         })
         .catch(() => {
             document.getElementById('overview-tab').innerHTML =
@@ -1024,7 +1114,112 @@
         });
     }
 
-    function buildQuery1ReportRows(elements) {
+    const QUERY1_HIDDEN_ALL_TEAMS = [
+        'Free Agent',
+        'Content Creator',
+        'Retired'
+    ];
+
+    function isQuery1HiddenAllTeam(teamName) {
+        return QUERY1_HIDDEN_ALL_TEAMS.includes(teamName);
+    }
+
+    const QUERY1_MIN_TEAM_PLAYERS = 6;
+
+    function splitElements(elements) {
+        const nodes = elements.filter(el => el.data && el.data.id && !el.data.source);
+        const edges = elements.filter(el => el.data && el.data.source && el.data.target);
+        const nodeMap = new Map(nodes.map(el => [el.data.id, el.data]));
+
+        return { nodes, edges, nodeMap };
+    }
+
+    function getQuery1TeamPlayerCounts(elements) {
+        const { edges, nodeMap } = splitElements(elements);
+        const counts = new Map();
+
+        edges.forEach(edge => {
+            const sourceNode = nodeMap.get(edge.data.source);
+            const targetNode = nodeMap.get(edge.data.target);
+
+            if (sourceNode?.type === 'player' && targetNode?.type === 'team') {
+                counts.set(edge.data.target, (counts.get(edge.data.target) || 0) + 1);
+            }
+        });
+
+        return counts;
+    }
+
+    function getQuery1MajorTeamIds(elements) {
+        const { nodes } = splitElements(elements);
+        const counts = getQuery1TeamPlayerCounts(elements);
+        const majorTeamIds = new Set();
+
+        nodes.forEach(node => {
+            if (node.data.type !== 'team') return;
+            if (isQuery1HiddenAllTeam(node.data.label)) return;
+
+            const playerCount = counts.get(node.data.id) || 0;
+            if (playerCount >= QUERY1_MIN_TEAM_PLAYERS) {
+                majorTeamIds.add(node.data.id);
+            }
+        });
+
+        return majorTeamIds;
+    }
+
+    function getQuery1AllViewElements(elements) {
+        const { nodes, edges } = splitElements(elements);
+        const majorTeamIds = getQuery1MajorTeamIds(elements);
+
+        const visibleEdges = edges.filter(edge =>
+            majorTeamIds.has(edge.data.target)
+        );
+
+        const visibleNodeIds = new Set();
+        visibleEdges.forEach(edge => {
+            visibleNodeIds.add(edge.data.source);
+            visibleNodeIds.add(edge.data.target);
+        });
+
+        const visibleNodes = nodes.filter(node =>
+            visibleNodeIds.has(node.data.id)
+        );
+
+        return [...visibleNodes, ...visibleEdges];
+    }
+
+    function getQuery1HubElements(elements) {
+        const { nodes, edges } = splitElements(elements);
+        const counts = getQuery1TeamPlayerCounts(elements);
+        const majorTeamIds = getQuery1MajorTeamIds(elements);
+
+        const visibleEdges = edges.filter(edge =>
+            majorTeamIds.has(edge.data.target)
+        );
+
+        const visiblePlayerIds = new Set();
+        visibleEdges.forEach(edge => visiblePlayerIds.add(edge.data.source));
+
+        const teamHubs = nodes
+            .filter(node => majorTeamIds.has(node.data.id))
+            .map(node => ({
+                data: {
+                    ...node.data,
+                    playerCount: counts.get(node.data.id) || 0,
+                    label: `${node.data.label} (${counts.get(node.data.id) || 0})`
+                },
+                classes: 'query1-team-hub'
+            }));
+
+        const visiblePlayers = nodes.filter(node =>
+            visiblePlayerIds.has(node.data.id)
+        );
+
+        return [...teamHubs, ...visiblePlayers, ...visibleEdges];
+    }
+
+    function buildQuery1ReportRows(elements, hideSpecialTeams = false) {
         const nodes = new Map(
             elements
                 .filter(el => el.data && !el.data.source)
@@ -1037,17 +1232,18 @@
                 player: nodes.get(el.data.source)?.label || 'N/A',
                 team: nodes.get(el.data.target)?.label || 'N/A'
             }))
+            .filter(row => !hideSpecialTeams || !isQuery1HiddenAllTeam(row.team))
             .sort((a, b) => a.player.localeCompare(b.player) || a.team.localeCompare(b.team));
     }
 
-    function updateQuery1Report(elements, resetPage = true) {
+    function updateQuery1Report(elements, resetPage = true, hideSpecialTeams = false) {
         renderPaginatedReportRows({
             key: 'query1',
             tbodyId: 'query1-report-body',
             emptyId: 'query1-report-empty',
             statusId: 'query1-report-page-status',
             nextBtnId: 'query1-report-next',
-            rows: buildQuery1ReportRows(elements),
+            rows: buildQuery1ReportRows(elements, hideSpecialTeams),
             columns: ['player', 'team'],
             resetPage
         });
@@ -1153,9 +1349,9 @@
     // QUERY 1
     let query1Cy = null;
     let query1AllElements = [];
+    let query1ExpandedTeamIds = new Set();
 
     function getNeighborhoodElements(playerId) {
-
         if (!playerId) return query1AllElements;
 
         const edgeEls = query1AllElements.filter(
@@ -1188,19 +1384,12 @@
                 .map(el => el.data.target)
         );
 
-        const isolatedGroups = [
-            'Free Agent',
-            'Content Creator',
-            'Retired'
-        ];
-
         const isIsolatedGroup = Array.from(teamIds).some(teamId => {
             const teamNode = nodeMap.get(teamId);
-            return isolatedGroups.includes(teamNode?.label);
+            return isQuery1HiddenAllTeam(teamNode?.label);
         });
 
         if (!isIsolatedGroup) {
-
             const teammateEdges = edgeEls.filter(el =>
                 teamIds.has(el.data.target)
             );
@@ -1223,19 +1412,286 @@
         return [...filteredNodes, ...filteredEdges];
     }
 
-    function renderQuery1(elements) {
+    function getStableHash(value) {
+        const text = String(value || '');
+        let hash = 0;
+
+        for (let i = 0; i < text.length; i++) {
+            hash = ((hash << 5) - hash) + text.charCodeAt(i);
+            hash |= 0;
+        }
+
+        return Math.abs(hash);
+    }
+
+    function getStableNoise(value, min = -1, max = 1) {
+        const raw = getStableHash(value) % 10000;
+        return min + (raw / 10000) * (max - min);
+    }
+
+    function getQuery1ConstellationClusterElements(elements) {
+        const { nodes, edges } = splitElements(elements);
+        const counts = getQuery1TeamPlayerCounts(elements);
+
+        const teams = nodes
+            .filter(node => node.data.type === 'team')
+            .sort((a, b) => {
+                const countDiff = (counts.get(b.data.id) || 0) - (counts.get(a.data.id) || 0);
+                return countDiff || a.data.label.localeCompare(b.data.label);
+            });
+
+        const playersByTeam = new Map();
+        edges.forEach(edge => {
+            if (!playersByTeam.has(edge.data.target)) {
+                playersByTeam.set(edge.data.target, []);
+            }
+            playersByTeam.get(edge.data.target).push(edge.data.source);
+        });
+
+        const positionMap = new Map();
+        const teamCount = teams.length;
+        const innerCount = Math.min(teamCount, 8);
+        const middleCount = Math.max(0, Math.min(teamCount - innerCount, 14));
+        const outerCount = Math.max(0, teamCount - innerCount - middleCount);
+
+        const ringGroups = [
+            { start: 0, count: innerCount, radius: 170 },
+            { start: innerCount, count: middleCount, radius: 330 },
+            { start: innerCount + middleCount, count: outerCount, radius: 500 }
+        ];
+
+        ringGroups.forEach((ring, ringIndex) => {
+            if (ring.count <= 0) return;
+
+            for (let i = 0; i < ring.count; i++) {
+                const team = teams[ring.start + i];
+                const teamId = team.data.id;
+                const playerCount = counts.get(teamId) || 0;
+
+                const baseAngle = ((Math.PI * 2) * i / ring.count) + (ringIndex * 0.34);
+                const angleJitter = getStableNoise(`${teamId}-angle`, -0.17, 0.17);
+                const radiusJitter = getStableNoise(`${teamId}-radius`, -42, 42);
+                const radiusBoost = Math.min(playerCount * 3.5, 80);
+                const angle = baseAngle + angleJitter;
+                const radius = ring.radius + radiusJitter + radiusBoost;
+
+                positionMap.set(teamId, {
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius
+                });
+            }
+        });
+
+        const playerTeamSeen = new Set();
+
+        teams.forEach(team => {
+            const teamId = team.data.id;
+            const teamPos = positionMap.get(teamId) || { x: 0, y: 0 };
+            const playerIds = Array.from(new Set(playersByTeam.get(teamId) || []))
+                .sort((a, b) => String(a).localeCompare(String(b)));
+            const playerCount = playerIds.length;
+
+            playerIds.forEach((playerId, index) => {
+                if (playerTeamSeen.has(playerId)) return;
+
+                const baseAngle = ((Math.PI * 2) * index / Math.max(playerCount, 1));
+                const angleJitter = getStableNoise(`${playerId}-${teamId}-angle`, -0.24, 0.24);
+                const distanceJitter = getStableNoise(`${playerId}-${teamId}-distance`, -10, 16);
+                const clusterRadius = 56 + Math.min(playerCount * 1.7, 42) + ((index % 3) * 9) + distanceJitter;
+                const angle = baseAngle + angleJitter;
+
+                positionMap.set(playerId, {
+                    x: teamPos.x + Math.cos(angle) * clusterRadius,
+                    y: teamPos.y + Math.sin(angle) * clusterRadius
+                });
+
+                playerTeamSeen.add(playerId);
+            });
+        });
+
+        const unpositionedNodes = nodes.filter(node => !positionMap.has(node.data.id));
+        unpositionedNodes.forEach((node, index) => {
+            const angle = ((Math.PI * 2) * index / Math.max(unpositionedNodes.length, 1));
+            const radius = 620 + getStableNoise(`${node.data.id}-fallback`, -60, 60);
+            positionMap.set(node.data.id, {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            });
+        });
+
+        return elements.map(el => {
+            if (el.data && el.data.id && !el.data.source) {
+                return {
+                    ...el,
+                    position: positionMap.get(el.data.id) || { x: 0, y: 0 }
+                };
+            }
+
+            return el;
+        });
+    }
+
+    function getQuery1ConstellationLayout() {
+        return {
+            name: 'preset',
+            fit: true,
+            padding: 85,
+            animate: false
+        };
+    }
+
+    function getQuery1Style() {
+        return [
+            ...getSharedQueryStyles(),
+            {
+                selector: '.layout-helper',
+                style: {
+                    'opacity': 0,
+                    'width': 0,
+                    'height': 0,
+                    'line-opacity': 0,
+                    'events': 'no',
+                    'text-opacity': 0,
+                    'background-opacity': 0,
+                    'border-opacity': 0
+                }
+            },
+            {
+                selector: '.query1-team-hub',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#2563eb',
+                    'width': ele => Math.min(34, 14 + (ele.data('playerCount') || 0) * 1.2),
+                    'height': ele => Math.min(34, 14 + (ele.data('playerCount') || 0) * 1.2),
+                    'font-size': 8,
+                    'font-weight': 500,
+                    'text-margin-y': 8,
+                    'shadow-blur': 15,
+                    'shadow-color': '#2563eb',
+                    'shadow-opacity': 0.52
+                }
+            },
+            {
+                selector: '.expanded-team',
+                style: {
+                    'background-color': '#06b6d4',
+                    'shadow-color': '#06b6d4',
+                    'shadow-opacity': 0.7
+                }
+            },
+            {
+                selector: 'node[type="player"]',
+                style: {
+                    'shape': 'ellipse',
+                    'background-color': '#7c3aed',
+                    'width': 8,
+                    'height': 8,
+                    'font-size': 5,
+                    'text-opacity': 0.10,
+                    'text-margin-y': 4,
+                    'shadow-blur': 10,
+                    'shadow-color': '#7c3aed',
+                    'shadow-opacity': 0.46
+                }
+            },
+            {
+                selector: 'node[type="team"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#2563eb',
+                    'width': 16,
+                    'height': 16,
+                    'font-size': 7,
+                    'text-margin-y': 6,
+                    'shadow-blur': 12,
+                    'shadow-color': '#2563eb',
+                    'shadow-opacity': 0.42
+                }
+            },
+            {
+                selector: 'edge[edgeType="Plays_For"]',
+                style: {
+                    'curve-style': 'bezier',
+                    'width': 0.85,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#7c3aed #2563eb #06b6d4',
+                    'line-gradient-stop-positions': '0 55 100',
+                    'opacity': 0.30,
+                    'target-arrow-shape': 'none'
+                }
+            },
+            {
+                selector: 'node:selected',
+                style: {
+                    'text-opacity': 1,
+                    'font-size': 9,
+                    'font-weight': 600,
+                    'text-outline-width': 2,
+                    'text-outline-color': '#05060a'
+                }
+            }
+        ];
+    }
+
+    function getQuery1AnchoredLayout() {
+        return {
+            name: 'cose',
+            animate: false,
+            fit: true,
+            padding: 65,
+
+            nodeRepulsion: 230000,
+            idealEdgeLength: 105,
+            edgeElasticity: 105,
+
+            gravity: 0.18,
+            gravityRange: 3.0,
+            gravityRangeCompound: 1.5,
+            gravityCompound: 1.0,
+
+            componentSpacing: 95,
+            nodeOverlap: 80,
+            nestingFactor: 1.0,
+
+            numIter: 4500,
+            initialTemp: 240,
+            coolingFactor: 0.96,
+            minTemp: 1.0
+        };
+    }
+
+    function renderQuery1(elements, useConstellationCluster = false) {
         if (query1Cy) {
             query1Cy.destroy();
         }
 
+        const graphElements = useConstellationCluster
+            ? getQuery1ConstellationClusterElements(elements)
+            : elements;
+
         query1Cy = cytoscape({
             container: document.getElementById('subgraph-cy'),
-            elements: elements,
-            style: getSharedQueryStyles(),
-            layout: getSharedQueryLayout()
+            elements: graphElements,
+            style: getQuery1Style(),
+            layout: useConstellationCluster
+                ? getQuery1ConstellationLayout()
+                : getSharedQueryLayout()
+        });
+
+        query1Cy.ready(() => {
+            query1Cy.fit(query1Cy.elements(), 85);
+            query1Cy.center();
         });
 
         attachNodeInfo(query1Cy, 'query1-info-panel');
+    }
+
+    function renderQuery1AllHubs() {
+        const hubElements = getQuery1HubElements(query1AllElements);
+        const reportElements = getQuery1AllViewElements(query1AllElements);
+
+        renderQuery1(hubElements, true);
+        updateQuery1Report(reportElements, true, true);
     }
 
     fetch('/api/graph-data/query1')
@@ -1255,27 +1711,554 @@
                 dropdown.appendChild(option);
             });
 
-            renderQuery1(query1AllElements);
-            updateQuery1Report(query1AllElements);
+            renderQuery1AllHubs();
 
             dropdown.addEventListener('change', function() {
                 const playerId = this.value;
+
+                if (!playerId) {
+                    renderQuery1AllHubs();
+                    return;
+                }
+
+                query1ExpandedTeamIds.clear();
                 const filtered = getNeighborhoodElements(playerId);
-                renderQuery1(filtered);
+                renderQuery1(filtered, false);
                 updateQuery1Report(filtered);
             });
 
             document.getElementById('query1-reset-btn').addEventListener('click', function() {
                 dropdown.value = '';
-                renderQuery1(query1AllElements);
-                updateQuery1Report(query1AllElements);
-            updateQuery1Report(query1AllElements);
+                query1ExpandedTeamIds.clear();
+                renderQuery1AllHubs();
             });
         })
         .catch(() => {
             document.getElementById('query1-tab').innerHTML =
                 '<div class="empty-state">The player/team query graph could not be loaded.</div>';
         });
+
+
+    function getConstellationDegreeCounts(elements) {
+        const { nodes, edges } = splitElements(elements);
+        const counts = new Map(nodes.map(node => [node.data.id, 0]));
+
+        edges.forEach(edge => {
+            counts.set(edge.data.source, (counts.get(edge.data.source) || 0) + 1);
+            counts.set(edge.data.target, (counts.get(edge.data.target) || 0) + 1);
+        });
+
+        return counts;
+    }
+
+    function appendClassName(existingClasses, className) {
+        const current = existingClasses ? String(existingClasses).trim() : '';
+        return current ? `${current} ${className}` : className;
+    }
+
+    function getLooseConstellationElements(elements, options = {}) {
+        const {
+            hubType = 'team',
+            satelliteType = 'tournament',
+            helperPrefix = 'query-layout',
+            hubStartRadius = 115,
+            hubSpacing = 48,
+            satelliteBaseRadius = 66
+        } = options;
+
+        const { nodes, edges, nodeMap } = splitElements(elements);
+        const degreeCounts = getConstellationDegreeCounts(elements);
+
+        const hubs = nodes
+            .filter(node => node.data.type === hubType)
+            .sort((a, b) => {
+                const degreeDiff = (degreeCounts.get(b.data.id) || 0) - (degreeCounts.get(a.data.id) || 0);
+                return degreeDiff || String(a.data.label || '').localeCompare(String(b.data.label || ''));
+            });
+
+        const satellitesByHub = new Map();
+
+        edges.forEach(edge => {
+            const source = nodeMap.get(edge.data.source);
+            const target = nodeMap.get(edge.data.target);
+
+            if (!source || !target) return;
+
+            let hubId = null;
+            let satelliteId = null;
+
+            if (source.type === hubType && target.type === satelliteType) {
+                hubId = source.id;
+                satelliteId = target.id;
+            } else if (target.type === hubType && source.type === satelliteType) {
+                hubId = target.id;
+                satelliteId = source.id;
+            }
+
+            if (!hubId || !satelliteId) return;
+
+            if (!satellitesByHub.has(hubId)) {
+                satellitesByHub.set(hubId, []);
+            }
+
+            satellitesByHub.get(hubId).push(satelliteId);
+        });
+
+        const positionMap = new Map();
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+        hubs.forEach((hub, index) => {
+            const hubId = hub.data.id;
+            const degree = degreeCounts.get(hubId) || 0;
+            const angle = (index * goldenAngle) + getStableNoise(`${helperPrefix}-${hubId}-hub-angle`, -0.22, 0.22);
+            const radius = hubStartRadius + (Math.sqrt(index) * hubSpacing) + Math.min(degree * 3.2, 95) + getStableNoise(`${helperPrefix}-${hubId}-hub-radius`, -35, 35);
+
+            positionMap.set(hubId, {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            });
+        });
+
+        const positionedSatellites = new Set();
+
+        hubs.forEach((hub, hubIndex) => {
+            const hubId = hub.data.id;
+            const hubPos = positionMap.get(hubId) || { x: 0, y: 0 };
+            const satelliteIds = Array.from(new Set(satellitesByHub.get(hubId) || []))
+                .filter(id => !positionedSatellites.has(id))
+                .sort((a, b) => String(nodeMap.get(a)?.label || a).localeCompare(String(nodeMap.get(b)?.label || b)));
+
+            const satelliteCount = satelliteIds.length;
+
+            satelliteIds.forEach((satelliteId, index) => {
+                const orbitAngle = ((Math.PI * 2) * index / Math.max(satelliteCount, 1))
+                    + (hubIndex * 0.31)
+                    + getStableNoise(`${helperPrefix}-${hubId}-${satelliteId}-sat-angle`, -0.28, 0.28);
+
+                const orbitRadius = satelliteBaseRadius
+                    + Math.min(satelliteCount * 1.9, 56)
+                    + ((index % 4) * 10)
+                    + getStableNoise(`${helperPrefix}-${hubId}-${satelliteId}-sat-radius`, -14, 18);
+
+                positionMap.set(satelliteId, {
+                    x: hubPos.x + Math.cos(orbitAngle) * orbitRadius,
+                    y: hubPos.y + Math.sin(orbitAngle) * orbitRadius
+                });
+
+                positionedSatellites.add(satelliteId);
+            });
+        });
+
+        const unpositionedNodes = nodes
+            .filter(node => !positionMap.has(node.data.id))
+            .sort((a, b) => String(a.data.label || '').localeCompare(String(b.data.label || '')));
+
+        unpositionedNodes.forEach((node, index) => {
+            const angle = (index * goldenAngle) + getStableNoise(`${helperPrefix}-${node.data.id}-fallback-angle`, -0.2, 0.2);
+            const radius = 520 + (Math.sqrt(index) * 36) + getStableNoise(`${helperPrefix}-${node.data.id}-fallback-radius`, -55, 55);
+
+            positionMap.set(node.data.id, {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            });
+        });
+
+        const positionedElements = elements.map(el => {
+            if (el.data && el.data.id && !el.data.source) {
+                const isHub = el.data.type === hubType;
+                const isSatellite = el.data.type === satelliteType;
+                const classes = isHub
+                    ? appendClassName(el.classes, 'query-constellation-hub')
+                    : isSatellite
+                        ? appendClassName(el.classes, 'query-constellation-satellite')
+                        : el.classes;
+
+                return {
+                    ...el,
+                    classes,
+                    position: positionMap.get(el.data.id) || { x: 0, y: 0 },
+                    data: {
+                        ...el.data,
+                        connectionCount: degreeCounts.get(el.data.id) || 0
+                    }
+                };
+            }
+
+            return el;
+        });
+
+        const helperElements = [
+            {
+                data: {
+                    id: `${helperPrefix}-anchor`,
+                    label: '',
+                    type: 'layout-helper'
+                },
+                position: { x: 0, y: 0 },
+                classes: 'layout-helper'
+            }
+        ];
+
+        hubs.forEach(hub => {
+            helperElements.push({
+                data: {
+                    id: `${helperPrefix}-anchor-edge-${hub.data.id}`,
+                    source: `${helperPrefix}-anchor`,
+                    target: hub.data.id,
+                    edgeType: 'Layout_Helper'
+                },
+                classes: 'layout-helper'
+            });
+        });
+
+        return positionedElements.concat(helperElements);
+    }
+
+    function getConstellationQueryStyles() {
+        return [
+            ...getSharedQueryStyles(),
+            {
+                selector: '.layout-helper',
+                style: {
+                    'opacity': 0,
+                    'width': 0,
+                    'height': 0,
+                    'line-opacity': 0,
+                    'events': 'no',
+                    'text-opacity': 0,
+                    'background-opacity': 0,
+                    'border-opacity': 0
+                }
+            },
+            {
+                selector: '.query-constellation-hub',
+                style: {
+                    'width': ele => Math.min(36, 16 + (ele.data('connectionCount') || 0) * 1.15),
+                    'height': ele => Math.min(36, 16 + (ele.data('connectionCount') || 0) * 1.15),
+                    'font-size': 8,
+                    'font-weight': 500,
+                    'text-margin-y': 8,
+                    'shadow-blur': 16,
+                    'shadow-opacity': 0.56
+                }
+            },
+            {
+                selector: '.query-constellation-satellite',
+                style: {
+                    'width': ele => Math.min(27, 13 + (ele.data('connectionCount') || 0) * 0.7),
+                    'height': ele => Math.min(27, 13 + (ele.data('connectionCount') || 0) * 0.7),
+                    'font-size': 7,
+                    'text-margin-y': 7,
+                    'shadow-blur': 13,
+                    'shadow-opacity': 0.46
+                }
+            },
+            {
+                selector: 'edge[edgeType="Played_In"]',
+                style: {
+                    'curve-style': 'bezier',
+                    'width': 0.9,
+                    'opacity': 0.33,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#2563eb #7c3aed #06b6d4',
+                    'line-gradient-stop-positions': '0 52 100'
+                }
+            },
+            {
+                selector: 'edge[edgeType="Won_By"]',
+                style: {
+                    'curve-style': 'bezier',
+                    'width': 1.15,
+                    'opacity': 0.48,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#facc15 #a855f7 #06b6d4',
+                    'line-gradient-stop-positions': '0 48 100'
+                }
+            },
+            {
+                selector: 'node:selected',
+                style: {
+                    'text-opacity': 1,
+                    'font-size': 9,
+                    'font-weight': 600,
+                    'text-outline-width': 2,
+                    'text-outline-color': '#05060a'
+                }
+            }
+        ];
+    }
+
+    function getConstellationPresetLayout() {
+        return {
+            name: 'preset',
+            fit: true,
+            padding: 85,
+            animate: false
+        };
+    }
+
+    function getQuery2Style() {
+        return [
+            ...getQuery1Style(),
+            {
+                selector: '.query2-team-hub',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#2563eb',
+                    'width': ele => Math.min(34, 14 + (ele.data('connectionCount') || 0) * 1.2),
+                    'height': ele => Math.min(34, 14 + (ele.data('connectionCount') || 0) * 1.2),
+                    'font-size': 8,
+                    'font-weight': 500,
+                    'text-margin-y': 8,
+                    'shadow-blur': 15,
+                    'shadow-color': '#2563eb',
+                    'shadow-opacity': 0.52
+                }
+            },
+            {
+                selector: '.query2-tournament-satellite',
+                style: {
+                    'shape': 'ellipse',
+                    'background-color': '#7c3aed',
+                    'width': 8,
+                    'height': 8,
+                    'font-size': 5,
+                    'text-opacity': 0.10,
+                    'text-margin-y': 4,
+                    'shadow-blur': 10,
+                    'shadow-color': '#7c3aed',
+                    'shadow-opacity': 0.46
+                }
+            },
+            {
+                selector: 'node[type="tournament"]',
+                style: {
+                    'shape': 'ellipse',
+                    'background-color': '#7c3aed',
+                    'width': 8,
+                    'height': 8,
+                    'font-size': 5,
+                    'text-opacity': 0.10,
+                    'text-margin-y': 4,
+                    'shadow-blur': 10,
+                    'shadow-color': '#7c3aed',
+                    'shadow-opacity': 0.46
+                }
+            },
+            {
+                selector: 'edge[edgeType="Played_In"]',
+                style: {
+                    'curve-style': 'bezier',
+                    'width': 0.85,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#7c3aed #2563eb #06b6d4',
+                    'line-gradient-stop-positions': '0 55 100',
+                    'opacity': 0.30,
+                    'target-arrow-shape': 'none'
+                }
+            },
+            {
+                selector: 'edge[edgeType="Won_By"]',
+                style: {
+                    'curve-style': 'bezier',
+                    'width': 0.85,
+                    'line-fill': 'linear-gradient',
+                    'line-gradient-stop-colors': '#7c3aed #2563eb #06b6d4',
+                    'line-gradient-stop-positions': '0 55 100',
+                    'opacity': 0.30,
+                    'target-arrow-shape': 'none'
+                }
+            },
+            {
+                selector: 'node:selected',
+                style: {
+                    'text-opacity': 1,
+                    'font-size': 9,
+                    'font-weight': 600,
+                    'text-outline-width': 2,
+                    'text-outline-color': '#05060a'
+                }
+            }
+        ];
+    }
+
+    function getQuery2ConstellationElements(elements) {
+        const nodes = elements.filter(el => el.data && el.data.id && !el.data.source);
+        const edges = elements.filter(el => el.data && el.data.source && el.data.target);
+
+        const nodeMap = new Map(nodes.map(node => [node.data.id, node.data]));
+        const degreeCounts = new Map(nodes.map(node => [node.data.id, 0]));
+        const tournamentsByTeam = new Map();
+        const teamsByTournament = new Map();
+
+        nodes.forEach(node => {
+            if (node.data.type === 'team') {
+                tournamentsByTeam.set(node.data.id, []);
+            }
+
+            if (node.data.type === 'tournament') {
+                teamsByTournament.set(node.data.id, []);
+            }
+        });
+
+        edges.forEach(edge => {
+            const source = nodeMap.get(edge.data.source);
+            const target = nodeMap.get(edge.data.target);
+
+            degreeCounts.set(edge.data.source, (degreeCounts.get(edge.data.source) || 0) + 1);
+            degreeCounts.set(edge.data.target, (degreeCounts.get(edge.data.target) || 0) + 1);
+
+            if (!source || !target) return;
+
+            if (source.type === 'team' && target.type === 'tournament') {
+                tournamentsByTeam.get(source.id)?.push(target.id);
+                teamsByTournament.get(target.id)?.push(source.id);
+            } else if (source.type === 'tournament' && target.type === 'team') {
+                tournamentsByTeam.get(target.id)?.push(source.id);
+                teamsByTournament.get(source.id)?.push(target.id);
+            }
+        });
+
+        const teams = nodes
+            .filter(node => node.data.type === 'team')
+            .sort((a, b) => {
+                const degreeDiff = (degreeCounts.get(b.data.id) || 0) - (degreeCounts.get(a.data.id) || 0);
+                return degreeDiff || String(a.data.label || '').localeCompare(String(b.data.label || ''));
+            });
+
+        const tournaments = nodes
+            .filter(node => node.data.type === 'tournament')
+            .sort((a, b) => String(a.data.label || '').localeCompare(String(b.data.label || '')));
+
+        const positionMap = new Map();
+        const teamCount = teams.length;
+
+        const innerCount = Math.min(teamCount, 8);
+        const middleCount = Math.max(0, Math.min(teamCount - innerCount, 14));
+        const outerCount = Math.max(0, teamCount - innerCount - middleCount);
+
+        const ringGroups = [
+            { start: 0, count: innerCount, radius: 170 },
+            { start: innerCount, count: middleCount, radius: 330 },
+            { start: innerCount + middleCount, count: outerCount, radius: 500 }
+        ];
+
+        ringGroups.forEach((ring, ringIndex) => {
+            if (ring.count <= 0) return;
+
+            for (let i = 0; i < ring.count; i++) {
+                const team = teams[ring.start + i];
+                const teamId = team.data.id;
+                const degree = degreeCounts.get(teamId) || 0;
+
+                const baseAngle = ((Math.PI * 2) * i / ring.count) + (ringIndex * 0.34);
+                const angleJitter = getStableNoise(`query2-team-angle-${teamId}`, -0.17, 0.17);
+                const radiusJitter = getStableNoise(`query2-team-radius-${teamId}`, -42, 42);
+                const radiusBoost = Math.min(degree * 3.5, 80);
+                const angle = baseAngle + angleJitter;
+                const radius = ring.radius + radiusJitter + radiusBoost;
+
+                positionMap.set(teamId, {
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius
+                });
+            }
+        });
+
+        const tournamentPrimaryTeam = new Map();
+
+        tournaments.forEach(tournament => {
+            const tournamentId = tournament.data.id;
+            const connectedTeamIds = Array.from(new Set(teamsByTournament.get(tournamentId) || []));
+
+            if (connectedTeamIds.length === 0) return;
+
+            const primaryTeamId = connectedTeamIds
+                .slice()
+                .sort((a, b) => {
+                    const degreeDiff = (degreeCounts.get(b) || 0) - (degreeCounts.get(a) || 0);
+                    return degreeDiff || String(nodeMap.get(a)?.label || '').localeCompare(String(nodeMap.get(b)?.label || ''));
+                })[0];
+
+            tournamentPrimaryTeam.set(tournamentId, primaryTeamId);
+        });
+
+        const primaryTournamentsByTeam = new Map();
+
+        tournamentPrimaryTeam.forEach((teamId, tournamentId) => {
+            if (!primaryTournamentsByTeam.has(teamId)) {
+                primaryTournamentsByTeam.set(teamId, []);
+            }
+
+            primaryTournamentsByTeam.get(teamId).push(tournamentId);
+        });
+
+        teams.forEach(team => {
+            const teamId = team.data.id;
+            const teamPos = positionMap.get(teamId) || { x: 0, y: 0 };
+            const tournamentIds = Array.from(new Set(primaryTournamentsByTeam.get(teamId) || []))
+                .sort((a, b) => String(nodeMap.get(a)?.label || '').localeCompare(String(nodeMap.get(b)?.label || '')));
+            const tournamentCount = tournamentIds.length;
+
+            tournamentIds.forEach((tournamentId, index) => {
+                const baseAngle = ((Math.PI * 2) * index / Math.max(tournamentCount, 1));
+                const angleJitter = getStableNoise(`query2-tournament-angle-${tournamentId}`, -0.24, 0.24);
+                const distanceJitter = getStableNoise(`query2-tournament-distance-${tournamentId}`, -10, 16);
+                const clusterRadius = 56 + Math.min(tournamentCount * 1.7, 42) + ((index % 3) * 9) + distanceJitter;
+                const angle = baseAngle + angleJitter;
+
+                positionMap.set(tournamentId, {
+                    x: teamPos.x + Math.cos(angle) * clusterRadius,
+                    y: teamPos.y + Math.sin(angle) * clusterRadius
+                });
+            });
+        });
+
+        const unpositionedNodes = nodes.filter(node => !positionMap.has(node.data.id));
+
+        unpositionedNodes.forEach((node, index) => {
+            const angle = ((Math.PI * 2) * index / Math.max(unpositionedNodes.length, 1));
+            const radius = 620 + getStableNoise(`query2-fallback-${node.data.id}`, -60, 60);
+
+            positionMap.set(node.data.id, {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            });
+        });
+
+        return elements.map(el => {
+            if (el.data && el.data.id && !el.data.source) {
+                const isTeam = el.data.type === 'team';
+                const isTournament = el.data.type === 'tournament';
+                const classes = isTeam
+                    ? appendClassName(el.classes, 'query2-team-hub')
+                    : isTournament
+                        ? appendClassName(el.classes, 'query2-tournament-satellite')
+                        : el.classes;
+
+                return {
+                    ...el,
+                    classes,
+                    position: positionMap.get(el.data.id) || { x: 0, y: 0 },
+                    data: {
+                        ...el.data,
+                        connectionCount: degreeCounts.get(el.data.id) || 0
+                    }
+                };
+            }
+
+            return el;
+        });
+    }
+
+    function getQuery2Layout() {
+        return {
+            name: 'preset',
+            fit: true,
+            padding: 85,
+            animate: false
+        };
+    }
 
     // QUERY 2
     let query2Cy = null;
@@ -1297,27 +2280,18 @@
 
         emptyBox.style.display = 'none';
 
+        const constellationElements = getQuery2ConstellationElements(elements);
+
         query2Cy = cytoscape({
             container: graphBox,
-            elements: elements,
-            style: getSharedQueryStyles(),
-            layout: {
-                name: 'cose',
-                animate: false,
-                fit: true,
-                padding: 50,
-                nodeRepulsion: 240000,
-                idealEdgeLength: 95,
-                edgeElasticity: 100,
-                gravity: 0.07,
-                componentSpacing: 190,
-                nodeOverlap: 240,
-                nestingFactor: 1.0,
-                numIter: 2400,
-                initialTemp: 180,
-                coolingFactor: 0.95,
-                minTemp: 1.0
-            }
+            elements: constellationElements,
+            style: getQuery2Style(),
+            layout: getQuery2Layout()
+        });
+
+        query2Cy.ready(() => {
+            query2Cy.fit(query2Cy.elements(), 85);
+            query2Cy.center();
         });
 
         attachNodeInfo(query2Cy, 'query2-info-panel');
@@ -1367,27 +2341,26 @@
 
         emptyBox.style.display = 'none';
 
+        const constellationElements = getLooseConstellationElements(elements, {
+            hubType: 'tournament',
+            satelliteType: 'team',
+            helperPrefix: 'query3-layout',
+            hubStartRadius: 110,
+            hubSpacing: 58,
+            satelliteBaseRadius: 78
+        });
+
         query3Cy = cytoscape({
             container: graphBox,
-            elements: elements,
-            style: getSharedQueryStyles(),
-            layout: {
-                name: 'cose',
-                animate: false,
-                fit: true,
-                padding: 50,
-                nodeRepulsion: 220000,
-                idealEdgeLength: 90,
-                edgeElasticity: 100,
-                gravity: 0.07,
-                componentSpacing: 180,
-                nodeOverlap: 220,
-                nestingFactor: 1.0,
-                numIter: 2200,
-                initialTemp: 180,
-                coolingFactor: 0.95,
-                minTemp: 1.0
-            }
+            elements: constellationElements,
+            style: getConstellationQueryStyles(),
+            layout: getConstellationPresetLayout()
+        });
+
+        query3Cy.ready(() => {
+            const visible = query3Cy.elements().not('.layout-helper');
+            query3Cy.fit(visible, 85);
+            query3Cy.center(visible);
         });
 
         attachNodeInfo(query3Cy, 'query3-info-panel');

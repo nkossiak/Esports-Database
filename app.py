@@ -2,6 +2,7 @@ import sqlite3
 import json
 import os
 import re
+from collections import defaultdict, deque
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -118,6 +119,14 @@ def ensure_graph_schema(conn):
         WHERE EdgeID IS NOT NULL
     ''')
 
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_nodes_type ON Nodes(NodeType)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_nodes_name ON Nodes(Name)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_edges_source ON Edges(SourceNodeID)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_edges_target ON Edges(TargetNodeID)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_edges_type ON Edges(EdgeType)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_graphmemberships_graph_node ON GraphMemberships(GraphID, NodeID)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_graphmemberships_graph_edge ON GraphMemberships(GraphID, EdgeID)')
+
     for graph_id, graph in GRAPH_DEFINITIONS.items():
         conn.execute(
             'INSERT OR IGNORE INTO Graphs (GraphID, GraphName, Description) VALUES (?, ?, ?)',
@@ -133,8 +142,13 @@ def get_db_connection():
     db_path = os.path.join(base_dir, 'esports.db')
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    ensure_graph_schema(conn)
     return conn
+
+
+def initialize_database():
+    conn = get_db_connection()
+    ensure_graph_schema(conn)
+    conn.close()
 
 # --- SMALL HELPERS ---
 def safe_json_load(value):
@@ -180,6 +194,75 @@ def parse_prize_value(raw_value):
         return float(cleaned) * multiplier
     except ValueError:
         return 0.0
+
+
+def keep_largest_connected_component(elements):
+    """
+    Keep only the largest connected component from a Cytoscape element list.
+    This removes tiny disconnected islands from the visual graph.
+    """
+    node_elements = []
+    edge_elements = []
+
+    for el in elements:
+        data = el.get('data', {})
+        if 'source' in data and 'target' in data:
+            edge_elements.append(el)
+        else:
+            node_elements.append(el)
+
+    node_ids = {el['data']['id'] for el in node_elements}
+    adjacency = defaultdict(set)
+
+    for edge in edge_elements:
+        source = edge['data']['source']
+        target = edge['data']['target']
+
+        if source in node_ids and target in node_ids:
+            adjacency[source].add(target)
+            adjacency[target].add(source)
+
+    visited = set()
+    largest_component = set()
+
+    for node_id in node_ids:
+        if node_id in visited:
+            continue
+
+        component = set()
+        queue = deque([node_id])
+
+        while queue:
+            current = queue.popleft()
+
+            if current in visited:
+                continue
+
+            visited.add(current)
+            component.add(current)
+
+            for neighbor in adjacency[current]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+
+        if len(component) > len(largest_component):
+            largest_component = component
+
+    if not largest_component:
+        return []
+
+    filtered_nodes = [
+        el for el in node_elements
+        if el['data']['id'] in largest_component
+    ]
+
+    filtered_edges = [
+        el for el in edge_elements
+        if el['data']['source'] in largest_component
+        and el['data']['target'] in largest_component
+    ]
+
+    return filtered_nodes + filtered_edges
 
 # --- ROUTES ---
 @app.route('/')
@@ -390,7 +473,6 @@ def reports_page():
     )
 
 
-
 @app.route('/api/graphs')
 def graphs_data():
     conn = get_db_connection()
@@ -422,17 +504,19 @@ def graphs_data():
 def all_graph_data():
     conn = get_db_connection()
 
+    # Constellation overview: show Teams and Tournaments only.
+    # Players are excluded so the overview layout does not get pulled into a dense hairball.
     nodes = conn.execute('''
         SELECT NodeID, Name, NodeType, Attributes
         FROM Nodes
-        WHERE NodeType IN ("Player", "Team", "Tournament")
+        WHERE NodeType IN ("Team", "Tournament")
         ORDER BY NodeType, Name
     ''').fetchall()
 
     edges = conn.execute('''
         SELECT EdgeID, SourceNodeID, TargetNodeID, EdgeType, Metadata
         FROM Edges
-        WHERE EdgeType IN ("Plays_For", "Played_In", "Won_By")
+        WHERE EdgeType IN ("Played_In", "Won_By")
     ''').fetchall()
 
     elements = []
@@ -458,6 +542,59 @@ def all_graph_data():
                 'label': edge['EdgeType'],
                 'edgeType': edge['EdgeType'],
                 'metadata': safe_json_load(edge['Metadata'])
+            }
+        })
+
+    conn.close()
+
+    # Keep the option available, but default is largest component.
+    component_mode = request.args.get('component', 'largest').strip().lower()
+    if component_mode == 'largest':
+        elements = keep_largest_connected_component(elements)
+
+    return jsonify({'elements': elements})
+
+
+# --- LAZY LOAD PLAYERS FOR OVERVIEW GRAPH ---
+@app.route('/api/team-players/<int:team_id>')
+def team_players(team_id):
+    conn = get_db_connection()
+
+    players = conn.execute('''
+        SELECT
+            n.NodeID,
+            n.Name,
+            n.NodeType,
+            n.Attributes,
+            e.EdgeID
+        FROM Edges e
+        JOIN Nodes n
+          ON n.NodeID = e.SourceNodeID
+        WHERE e.TargetNodeID = ?
+          AND e.EdgeType = "Plays_For"
+        ORDER BY n.Name
+    ''', (team_id,)).fetchall()
+
+    elements = []
+
+    for player in players:
+        elements.append({
+            'data': {
+                'id': str(player['NodeID']),
+                'label': player['Name'],
+                'type': 'player',
+                'nodeType': player['NodeType'],
+                'attributes': safe_json_load(player['Attributes'])
+            }
+        })
+
+        elements.append({
+            'data': {
+                'id': f"lazy{player['EdgeID']}",
+                'source': str(player['NodeID']),
+                'target': str(team_id),
+                'label': 'Plays_For',
+                'edgeType': 'Plays_For'
             }
         })
 
@@ -790,4 +927,5 @@ def query3_graph_data():
     return jsonify({'elements': elements})
 
 if __name__ == '__main__':
+    initialize_database()
     app.run(debug=True)
