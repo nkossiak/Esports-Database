@@ -33,12 +33,12 @@ def clean_text(text):
 
     return " ".join(text.split()).strip()
 
-def is_future_tournament(winner_text):
+def is_future_tournament(text):
 
     bad_words = ["TBD", "TBA"]
 
     for word in bad_words:
-        if word in winner_text:
+        if word in text:
             return True
 
     return False
@@ -86,16 +86,16 @@ def scrape_tournaments():
 
                 try:
 
-                    # ONLY HIGHLIGHTED TOURNAMENTS
                     row_class = row.get_attribute("class")
 
                     if not row_class:
                         continue
 
+                    # ONLY GOLD HIGHLIGHTED TOURNAMENTS
                     if "table2__row--highlighted" not in row_class:
                         continue
 
-                    # TOURNAMENT NAME
+                    # TOURNAMENT LINK
                     tournament_link = row.locator(
                         "td.column__tournament a"
                     ).first
@@ -149,21 +149,32 @@ def scrape_tournaments():
                     except:
                         pass
 
-                    # WINNER
+                    # WINNER + RUNNER UP
                     winner = "Unknown"
+                    runner_up = ""
 
                     try:
-                        winner_cell = row.locator(
-                            "td.column__placement"
-                        ).first
 
-                        winner = clean_text(
-                            winner_cell.inner_text()
-                        )
+                        placement_cells = row.locator(
+                            "td.column__placement"
+                        ).all()
+
+                        if len(placement_cells) > 0:
+
+                            winner = clean_text(
+                                placement_cells[0].inner_text()
+                            )
+
+                        if len(placement_cells) > 1:
+
+                            runner_up = clean_text(
+                                placement_cells[1].inner_text()
+                            )
+
                     except:
                         pass
 
-                    # SKIP TBD
+                    # SKIP FUTURE TOURNAMENTS
                     if is_future_tournament(winner):
 
                         print(
@@ -196,6 +207,7 @@ def scrape_tournaments():
                         "prize_pool": prize_pool,
                         "url": tournament_url,
                         "winner": winner,
+                        "runner_up": runner_up,
                         "tier": "S-Tier"
                     }
 
@@ -230,6 +242,118 @@ def scrape_tournaments():
                     )
 
                     conn.commit()
+
+                    # GET TOURNAMENT ID
+                    tournament_id = conn.execute(
+                        '''
+                        SELECT NodeID
+                        FROM Nodes
+                        WHERE Name = ?
+                        AND NodeType = "Tournament"
+                        ''',
+                        (tournament_name,)
+                    ).fetchone()[0]
+
+                    # INSERT WINNER TEAM
+                    cursor.execute(
+                        '''
+                        INSERT OR IGNORE INTO Nodes
+                        (NodeType, Name, Attributes)
+                        VALUES (?, ?, ?)
+                        ''',
+                        (
+                            "Team",
+                            winner,
+                            json.dumps({"game": game_name})
+                        )
+                    )
+
+                    conn.commit()
+
+                    # GET WINNER ID
+                    winner_id = conn.execute(
+                        '''
+                        SELECT NodeID
+                        FROM Nodes
+                        WHERE Name = ?
+                        AND NodeType = "Team"
+                        ''',
+                        (winner,)
+                    ).fetchone()[0]
+
+                    # INSERT WON_BY EDGE
+                    cursor.execute(
+                        '''
+                        INSERT OR IGNORE INTO Edges
+                        (SourceNodeID, TargetNodeID, EdgeType)
+                        VALUES (?, ?, ?)
+                        ''',
+                        (
+                            tournament_id,
+                            winner_id,
+                            "Won_By"
+                        )
+                    )
+
+                    # INSERT PLAYED_IN EDGE FOR WINNER
+                    cursor.execute(
+                        '''
+                        INSERT OR IGNORE INTO Edges
+                        (SourceNodeID, TargetNodeID, EdgeType)
+                        VALUES (?, ?, ?)
+                        ''',
+                        (
+                            tournament_id,
+                            winner_id,
+                            "Played_In"
+                        )
+                    )
+
+                    conn.commit()
+
+                    # INSERT RUNNER UP TEAM
+                    if runner_up and runner_up != "Unknown":
+
+                        cursor.execute(
+                            '''
+                            INSERT OR IGNORE INTO Nodes
+                            (NodeType, Name, Attributes)
+                            VALUES (?, ?, ?)
+                            ''',
+                            (
+                                "Team",
+                                runner_up,
+                                json.dumps({"game": game_name})
+                            )
+                        )
+
+                        conn.commit()
+
+                        runner_up_id = conn.execute(
+                            '''
+                            SELECT NodeID
+                            FROM Nodes
+                            WHERE Name = ?
+                            AND NodeType = "Team"
+                            ''',
+                            (runner_up,)
+                        ).fetchone()[0]
+
+                        # INSERT PLAYED_IN EDGE FOR RUNNER UP
+                        cursor.execute(
+                            '''
+                            INSERT OR IGNORE INTO Edges
+                            (SourceNodeID, TargetNodeID, EdgeType)
+                            VALUES (?, ?, ?)
+                            ''',
+                            (
+                                tournament_id,
+                                runner_up_id,
+                                "Played_In"
+                            )
+                        )
+
+                        conn.commit()
 
                     inserted_count += 1
 
