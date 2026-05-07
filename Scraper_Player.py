@@ -1,6 +1,5 @@
 import sqlite3
 import json
-import time
 from playwright.sync_api import sync_playwright
 
 BASE_URL = "https://prosettings.net/players/"
@@ -62,64 +61,115 @@ def scrape_players():
 
     with sync_playwright() as p:
 
-        browser = p.chromium.launch(headless=False)
+        # -------------------------------------------------
+        # BROWSER
+        # -------------------------------------------------
+
+        browser = p.chromium.launch(
+            headless=True
+        )
 
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0"
         )
 
         page = context.new_page()
 
+        # -------------------------------------------------
+        # BLOCK HEAVY RESOURCES
+        # -------------------------------------------------
+
+        page.route(
+            "**/*",
+            lambda route:
+                route.abort()
+                if route.request.resource_type in [
+                    "image",
+                    "media",
+                    "font"
+                ]
+                else route.continue_()
+        )
+
         # =========================================================
-        # COLLECT PLAYER URLS
+        # INFINITE SCROLL URL COLLECTION
         # =========================================================
 
         urls = set()
 
-        for page_num in range(1, 117):
+        page.goto(
+            BASE_URL,
+            wait_until="domcontentloaded",
+            timeout=15000
+        )
 
-            if page_num == 1:
-                url = BASE_URL
-            else:
-                url = f"{BASE_URL}page/{page_num}/"
+        print("Starting infinite scroll scraping...")
 
-            print(f"\nScraping list page {page_num}")
+        previous_count = 0
 
-            try:
+        while True:
 
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            # -------------------------------------------------
+            # FORCE SCROLL TO BOTTOM
+            # -------------------------------------------------
 
-                time.sleep(0.7)
+            page.evaluate("""
+                window.scrollTo(
+                    0,
+                    document.body.scrollHeight
+                )
+            """)
 
-                links = page.locator('a[href*="/players/"]').all()
+            # WAIT FOR NEW PLAYERS TO LOAD
+            page.wait_for_timeout(3000)
 
-                for el in links:
+            # -------------------------------------------------
+            # COLLECT PLAYER LINKS
+            # -------------------------------------------------
 
-                    href = el.get_attribute("href")
+            links = page.locator(
+                'a[href*="/players/"]'
+            ).all()
 
-                    if not href:
-                        continue
+            for el in links:
 
-                    clean_url = href.rstrip("/")
+                href = el.get_attribute("href")
 
-                    # ---------------- SKIP PAGINATION LINKS ----------------
+                if not href:
+                    continue
 
-                    if "/page/" in clean_url:
-                        continue
+                clean_url = href.rstrip("/")
 
-                    if clean_url.endswith("/players"):
-                        continue
+                # SKIP PAGINATION LINKS
+                if "/page/" in clean_url:
+                    continue
 
-                    # remove fragments like #cs2
-                    clean_url = clean_url.split("#")[0]
+                # SKIP NON-PLAYER LINKS
+                if clean_url.endswith("/players"):
+                    continue
 
-                    urls.add(clean_url)
+                # REMOVE #cs2 / #valorant etc
+                clean_url = clean_url.split("#")[0]
 
-            except Exception as e:
+                urls.add(clean_url)
 
-                print(f"Error on page {page_num}: {e}")
+            current_count = len(urls)
 
-        print(f"\nCollected {len(urls)} UNIQUE player URLs.")
+            print(f"Collected {current_count} player URLs")
+
+            # -------------------------------------------------
+            # STOP WHEN NO NEW PLAYERS LOAD
+            # -------------------------------------------------
+
+            if current_count == previous_count:
+
+                print("No new players loaded.")
+
+                break
+
+            previous_count = current_count
+
+        print(f"\nFINAL URL COUNT: {len(urls)}")
 
         # =========================================================
         # DATABASE CONNECTION
@@ -139,57 +189,94 @@ def scrape_players():
 
                 print(f"\nOpening: {url}")
 
-                page.goto(url, wait_until="commit", timeout=15000)
-                page.wait_for_selector("h1", timeout=5000)
+                page.goto(
+                    url,
+                    wait_until="commit",
+                    timeout=10000
+                )
 
-                time.sleep(1)
+                # WAIT ONLY FOR BIO CARD
+                page.wait_for_selector(
+                    "#bio",
+                    timeout=5000
+                )
 
-                # =========================================================
+                # -------------------------------------------------
+                # BIO CARD
+                # -------------------------------------------------
+
+                bio = page.locator("#bio")
+
                 # USERNAME
-                # =========================================================
+                username = bio.locator(
+                    "h1"
+                ).inner_text().strip()
 
-                try:
-                    username = page.locator("h1").inner_text().strip()
-                except:
-                    username = "Unknown"
+                # -------------------------------------------------
+                # TABLE DATA
+                # -------------------------------------------------
 
-                # =========================================================
-                # TABLE DATA HELPER
-                # =========================================================
+                rows = bio.locator(
+                    "table.data tr"
+                )
 
-                def get_table_data(label):
+                player_data = {}
+
+                row_count = rows.count()
+
+                for i in range(row_count):
+
+                    row = rows.nth(i)
 
                     try:
 
-                        row = page.locator(f"tr:has-text('{label}')")
+                        header = row.locator(
+                            "th"
+                        ).inner_text().strip()
 
-                        value = row.locator("td").nth(1).inner_text().strip()
+                        value = row.locator(
+                            "td"
+                        ).inner_text().strip()
 
-                        if value == "":
-                            return "Unknown"
-
-                        return value
+                        player_data[header] = value
 
                     except:
-                        return "Unknown"
+                        continue
 
-                # =========================================================
-                # PLAYER DATA
-                # =========================================================
+                # -------------------------------------------------
+                # EXTRACT DATA
+                # -------------------------------------------------
 
-                actual_name = get_table_data("Name")
-                team_name = get_table_data("Team")
-                country = get_table_data("Country")
-                birthday = get_table_data("Birthday")
+                actual_name = player_data.get(
+                    "Name",
+                    "Unknown"
+                )
 
-                if not team_name or team_name == "Unknown":
+                birthday = player_data.get(
+                    "Birthday",
+                    "Unknown"
+                )
+
+                country = player_data.get(
+                    "Country",
+                    "Unknown"
+                )
+
+                team_name = player_data.get(
+                    "Team",
+                    "Free Agent"
+                )
+
+                if team_name == "":
                     team_name = "Free Agent"
 
-                print(f"SUCCESS: {username} | Team: {team_name}")
+                print(
+                    f"SUCCESS: {username} | Team: {team_name}"
+                )
 
-                # =========================================================
+                # -------------------------------------------------
                 # PLAYER ATTRIBUTES
-                # =========================================================
+                # -------------------------------------------------
 
                 player_attributes = json.dumps({
                     "full_name": actual_name,
@@ -198,9 +285,9 @@ def scrape_players():
                     "profile_url": url
                 })
 
-                # =========================================================
+                # =================================================
                 # DUPLICATE PREVENTION - PLAYER
-                # =========================================================
+                # =================================================
 
                 player_row = conn.execute("""
                     SELECT NodeID
@@ -217,20 +304,28 @@ def scrape_players():
                         UPDATE Nodes
                         SET Attributes = ?
                         WHERE NodeID = ?
-                    """, (player_attributes, player_id))
+                    """, (
+                        player_attributes,
+                        player_id
+                    ))
 
                 else:
 
                     cursor = conn.execute("""
-                        INSERT INTO Nodes (NodeType, Name, Attributes)
+                        INSERT INTO Nodes
+                        (NodeType, Name, Attributes)
                         VALUES (?, ?, ?)
-                    """, ("Player", username, player_attributes))
+                    """, (
+                        "Player",
+                        username,
+                        player_attributes
+                    ))
 
                     player_id = cursor.lastrowid
 
-                # =========================================================
+                # =================================================
                 # DUPLICATE PREVENTION - TEAM
-                # =========================================================
+                # =================================================
 
                 team_row = conn.execute("""
                     SELECT NodeID
@@ -246,7 +341,8 @@ def scrape_players():
                 else:
 
                     cursor = conn.execute("""
-                        INSERT INTO Nodes (NodeType, Name, Attributes)
+                        INSERT INTO Nodes
+                        (NodeType, Name, Attributes)
                         VALUES (?, ?, ?)
                     """, (
                         "Team",
@@ -258,9 +354,9 @@ def scrape_players():
 
                     team_id = cursor.lastrowid
 
-                # =========================================================
+                # =================================================
                 # DUPLICATE PREVENTION - EDGE
-                # =========================================================
+                # =================================================
 
                 edge_row = conn.execute("""
                     SELECT EdgeID
