@@ -1155,28 +1155,16 @@
     let query1AllElements = [];
 
     function getNeighborhoodElements(playerId) {
-
         if (!playerId) return query1AllElements;
 
-        const edgeEls = query1AllElements.filter(
-            el => el.data && el.data.source && el.data.target
-        );
-
-        const nodeEls = query1AllElements.filter(
-            el => el.data && el.data.id && !el.data.source
-        );
-
-        const nodeMap = new Map(
-            nodeEls.map(el => [el.data.id, el.data])
-        );
+        const edgeEls = query1AllElements.filter(el => el.data && el.data.source && el.data.target);
+        const nodeEls = query1AllElements.filter(el => el.data && el.data.id && !el.data.source);
 
         const relevantEdges = edgeEls.filter(el =>
-            el.data.source === playerId ||
-            el.data.target === playerId
+            el.data.source === playerId || el.data.target === playerId
         );
 
         const includedIds = new Set([playerId]);
-
         relevantEdges.forEach(el => {
             includedIds.add(el.data.source);
             includedIds.add(el.data.target);
@@ -1188,36 +1176,15 @@
                 .map(el => el.data.target)
         );
 
-        const isolatedGroups = [
-            'Free Agent',
-            'Content Creator',
-            'Retired'
-        ];
-
-        const isIsolatedGroup = Array.from(teamIds).some(teamId => {
-            const teamNode = nodeMap.get(teamId);
-            return isolatedGroups.includes(teamNode?.label);
+        const teammateEdges = edgeEls.filter(el => teamIds.has(el.data.target));
+        teammateEdges.forEach(el => {
+            includedIds.add(el.data.source);
+            includedIds.add(el.data.target);
         });
 
-        if (!isIsolatedGroup) {
-
-            const teammateEdges = edgeEls.filter(el =>
-                teamIds.has(el.data.target)
-            );
-
-            teammateEdges.forEach(el => {
-                includedIds.add(el.data.source);
-                includedIds.add(el.data.target);
-            });
-        }
-
-        const filteredNodes = nodeEls.filter(el =>
-            includedIds.has(el.data.id)
-        );
-
+        const filteredNodes = nodeEls.filter(el => includedIds.has(el.data.id));
         const filteredEdges = edgeEls.filter(el =>
-            includedIds.has(el.data.source) &&
-            includedIds.has(el.data.target)
+            includedIds.has(el.data.source) && includedIds.has(el.data.target)
         );
 
         return [...filteredNodes, ...filteredEdges];
